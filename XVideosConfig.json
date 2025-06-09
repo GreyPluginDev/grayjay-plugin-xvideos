@@ -1,6 +1,7 @@
 {
     "name": "XVideos",
     "description": "XVideos video platform plugin for Grayjay",
+    "platformUrl": "https://www.xvideos.com",
     "author": "GreyPluginDev",
     "authorUrl": "https://github.com/GreyPluginDev",
     "sourceUrl": "https://grayjay-plugin-xvideos.pages.dev/XVideosConfig.json",

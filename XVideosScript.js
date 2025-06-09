@@ -575,7 +575,7 @@ function fetchVideoDetailsBulk(videoIds) {
         const videos = [];
         for (const videoId of videoIds) {
             const videoData = data.videos[videoId];
-            if (videoData) {
+            if (videoData && videoData.type !== 'deleted') {
                 videos.push(createPlatformVideo(videoData));
             }
         }

@@ -1044,18 +1044,18 @@ source.searchSuggestions = function(query) {
         const response = http.GET(suggestUrl, {}, false);
 
         if (!response.isOk) {
-            return getFallbackSuggestions(query);
+            return [];
         }
 
         let data;
         try {
             data = JSON.parse(response.body);
         } catch (parseError) {
-            return getFallbackSuggestions(query);
+            return [];
         }
 
         if (!data.result || !data.data) {
-            return getFallbackSuggestions(query);
+            return [];
         }
 
         const suggestions = [];
@@ -1081,28 +1081,9 @@ source.searchSuggestions = function(query) {
         return suggestions;
 
     } catch (error) {
-        return getFallbackSuggestions(query);
+        return [];
     }
 };
-
-function getFallbackSuggestions(query) {
-    // Fallback to static suggestions if API fails
-    const commonSuggestions = [
-        "amateur", "anal", "asian", "babe", "bbw", "big ass", "big tits",
-        "blonde", "blowjob", "brunette", "couple", "creampie", "cumshot",
-        "deepthroat", "ebony", "facial", "fetish", "fingering", "hardcore",
-        "interracial", "latina", "lesbian", "masturbation", "mature", "milf",
-        "oral", "orgasm", "pornstar", "pov", "public", "redhead", "rough",
-        "teen", "threesome", "toys", "webcam", "young"
-    ];
-
-    const queryLower = query.toLowerCase();
-    const suggestions = commonSuggestions
-        .filter(suggestion => suggestion.includes(queryLower))
-        .slice(0, 8);
-
-    return suggestions;
-}
 
 source.getSearchCapabilities = function() {
     return {

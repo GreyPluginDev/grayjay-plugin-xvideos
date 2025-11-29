@@ -1,0 +1,22 @@
+{
+    "name": "SpankBang",
+    "description": "SpankBang video platform plugin for Grayjay",
+    "platformUrl": "https://www.spankbang.com",
+    "author": "YourAuthorName",
+    "authorUrl": "https://github.com/YourUsername",
+    "sourceUrl": "https://grayjay-plugin-spankbang.pages.dev/SpankBangConfig.json",
+    "repositoryUrl": "https://github.com/YourUsername/grayjay-plugin-spankbang",
+    "scriptUrl": "./SpankBangScript.js",
+    "version": 1,
+    "iconUrl": "./icon.png",
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567891",
+    "scriptSignature": "",
+    "scriptPublicKey": "",
+    "packages": ["Http"],
+    "allowEval": false,
+    "allowUrls": [
+        ".spankbang.com",
+        ".cdn.spankbang.com"
+    ]
+}
+

@@ -1,25 +1,19 @@
-const BASE_URL = "https://www.xv-app1.com/app-api/6";
-const PLATFORM = "XVIDEOS";
-
+const BASE_URL = "https://spankbang.com";
+const PLATFORM = "SPANKBANG";
 let localConfig = {};
 
 /**
  * Configuration constants for better maintainability
  */
 const CONFIG = {
-    // Pagination settings
     DEFAULT_PAGE_SIZE: 20,
-    COMMENTS_PAGE_SIZE: 50,
-
-    // Video quality settings
+    COMMENTS_PAGE_SIZE: 50, // adjust if needed
     VIDEO_QUALITIES: {
-        LOW: { name: "250p", width: 320, height: 240 },
+        LOW: { name: "240p", width: 320, height: 240 },
         MEDIUM: { name: "360p", width: 640, height: 360 }
     },
-
-    // URL schemes
-    INTERNAL_URL_SCHEME: "xvideos://profile/",
-    EXTERNAL_URL_BASE: "https://www.xvideos.com"
+    INTERNAL_URL_SCHEME: "spankbang://profile/",  // optional, can be used if you implement app deep linking
+    EXTERNAL_URL_BASE: "https://spankbang.com"
 };
 
 /**
@@ -28,14 +22,7 @@ const CONFIG = {
  * Note: accept-encoding is excluded to avoid gzip issues
  */
 const API_HEADERS = {
-    "user-agent": "(Linux; Android 15; sdk_gphone64_x86_64 Build/AE3A.240806.005) XXXAndroidApp/1.7",
-    "x-app-android-version": "15",
-    "x-app-channel": "BETA",
-    "x-app-country": "US",
-    "x-app-language": "en",
-    "x-app-main-cat": "straight",
-    "x-app-mobile-id": "df36aee9-13c2-4eec-b59e-7de3ef564317",
-    "x-app-version": "1.7",
+    "User-Agent": "Mozilla/5.0 (Linux; Android 15; Pixel 7 Build/TP1A.220624.014) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 };
 
 /**
@@ -43,78 +30,74 @@ const API_HEADERS = {
  * Centralized for better maintainability and reusability
  */
 const REGEX_PATTERNS = {
-    // URL Detection Patterns
     urls: {
         // Video URL patterns
-        videoStandard: /^https?:\/\/(?:www\.)?xvideos\.com\/video.([a-zA-Z0-9]+)\/.*$/,
-        videoAlternative: /^https?:\/\/(?:www\.)?xvideos\.com\/video\/([a-zA-Z0-9]+)\/.*$/,
-        videoMobile: /^https?:\/\/(?:m\.)?xvideos\.com\/video.([a-zA-Z0-9]+)\/.*$/,
-        videoNumeric: /^https?:\/\/(?:www\.)?xvideos\.com\/.*video.*([0-9]+).*$/,
-        videoNumericWithSuffix: /^https?:\/\/(?:www\.)?xvideos\.com\/video.([0-9]+[a-z])\/.*$/,
+        videoStandard: /^https?:\/\/(?:www\.)?spankbang\.com\/([a-zA-Z0-9]+)\/.*$/,
+        videoMobile: /^https?:\/\/(?:m\.)?spankbang\.com\/([a-zA-Z0-9]+)\/.*$/,
 
         // Channel/Profile URL patterns
-        channelStandard: /^https?:\/\/(?:www\.)?xvideos\.com\/profile\/[^\/\?]+/,
-        channelMobile: /^https?:\/\/(?:m\.)?xvideos\.com\/profile\/[^\/\?]+/,
-        channelInternal: /^xvideos:\/\/profile\/([0-9]+)$/,
-        channelsStandard: /^https?:\/\/(?:www\.)?xvideos\.com\/channels\/[^\/\?]+/,
-        modelsStandard: /^https?:\/\/(?:www\.)?xvideos\.com\/models\/[^\/\?]+/,
+        channelStandard: /^https?:\/\/(?:www\.)?spankbang\.com\/users\/[^\/\?]+/,
+        channelMobile: /^https?:\/\/(?:m\.)?spankbang\.com\/users\/[^\/\?]+/,
 
         // Pornstar URL patterns
-        pornstarStandard: /^https?:\/\/(?:www\.)?xvideos\.com\/pornstar\/[^\/\?]+/,
-        pornstarMobile: /^https?:\/\/(?:m\.)?xvideos\.com\/pornstar\/[^\/\?]+/,
+        pornstarStandard: /^https?:\/\/(?:www\.)?spankbang\.com\/pornstar\/[^\/\?]+/,
+        pornstarMobile: /^https?:\/\/(?:m\.)?spankbang\.com\/pornstar\/[^\/\?]+/,
 
         // Playlist URL patterns
-        playlistInternal: /^xvideos:\/\/playlist\/(.+)$/,
-        categoryInternal: /^xvideos:\/\/category\/(.+)$/
-    },
+        playlistStandard: /^https?:\/\/(?:www\.)?spankbang\.com\/[a-zA-Z0-9]+\/playlist\/[^\/\?]+/,
+        playlistMobile: /^https?:\/\/(?:m\.)?spankbang\.com\/[a-zA-Z0-9]+\/playlist\/[^\/\?]+/,
 
-    // ID Extraction Patterns
-    extraction: {
-        // Video ID extraction
-        videoIdStandard: /\/video.([a-zA-Z0-9]+)\//,
-        videoIdAlternative: /\/video\/([a-zA-Z0-9]+)\//,
-        videoIdNumeric: /video.*?([0-9]+)/,
-        videoIdNumericWithSuffix: /\/video.([0-9]+[a-z])\//,
-
-        // Profile ID extraction
-        profileIdNumeric: /\/profile\/([0-9]+)/,
-        profileIdUsername: /\/profile\/([^\/\?]+)/,
-        profileIdGeneral: /profile.*?([0-9]+)/,
-        channelsUsername: /\/channels\/([^\/\?]+)/,
-        modelsUsername: /\/models\/([^\/\?]+)/,
-
-        // Pornstar name extraction
-        pornstarName: /\/pornstar\/([^\/\?]+)/
-    },
-
-    // Content Parsing Patterns
-    parsing: {
-        // Duration parsing (e.g., "6min", "27min", "1h 30min")
-        duration: /(\d+)h|(\d+)min|(\d+)s/g,
-
-        // HTML tag removal
-        htmlTags: /<[^>]*>/g,
-        htmlBreaks: /<br\s*\/?>/gi
+        // Internal schemes for GrayJay
+        playlistInternal: /^spankbang:\/\/playlist\/(.+)$/,
+        categoryInternal: /^spankbang:\/\/category\/(.+)$/
     }
+
+// ID Extraction Patterns for SpankBang
+extraction: {
+    // Video ID extraction
+    videoIdStandard: /\/([a-zA-Z0-9]+)\//,           // e.g., /9m3ae/video
+    videoIdPlaylist: /\/playlist\/([^\/\?]+)/,       // e.g., /playlist/3danim
+
+    // Profile / Channel ID extraction
+    profileIdUsername: /\/users\/([^\/\?]+)/,        // e.g., /users/username
+
+    // Pornstar name extraction
+    pornstarName: /\/pornstar\/([^\/\?]+)/
+},
+
+// Content Parsing Patterns
+parsing: {
+    // Duration parsing (e.g., "6:27" or "1:30:15" format SpankBang uses)
+    duration: /(\d+):(\d+)(?::(\d+))?/g,
+
+    // HTML tag removal
+    htmlTags: /<[^>]*>/g,
+    htmlBreaks: /<br\s*\/?>/gi
+}
+
+/**
+ * Utility functions for SpankBang plugin
+ * Handles API requests with standardized error handling
+ */
+
+const API_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 };
 
 /**
- * Utility functions for better code reusability and maintenance
- */
-
-/**
- * Make an API request with standardized error handling and logging
+ * Make an API request with error handling and optional logging
  * @param {string} url - The API endpoint URL
  * @param {string} method - HTTP method (GET, POST)
  * @param {Object} headers - Request headers (defaults to API_HEADERS)
- * @param {string} body - Request body for POST requests
- * @param {string} context - Context for logging (e.g., "home content", "video details")
+ * @param {string} body - Optional POST request body
+ * @param {string} context - Context for error logging
  * @returns {Object} Parsed JSON response
  */
 function makeApiRequest(url, method = 'GET', headers = API_HEADERS, body = null, context = 'API request') {
     try {
         let response;
-        if (method === 'POST') {
+
+        if (method.toUpperCase() === 'POST') {
             response = http.POST(url, body, headers, false);
         } else {
             response = http.GET(url, headers, false);
@@ -131,13 +114,13 @@ function makeApiRequest(url, method = 'GET', headers = API_HEADERS, body = null,
             throw new ScriptException(`${context} returned invalid JSON: ${parseError.message}`);
         }
 
-        // For comments API, the result field might not be present, so be more flexible
-        if (context.includes('comment') || context.includes('replies')) {
+        // Some endpoints (like comments) may not include a "result" field
+        if (context.toLowerCase().includes('comment') || context.toLowerCase().includes('replies')) {
             return data;
         }
 
         if (!data.result) {
-            throw new ScriptException(`Invalid ${context} response format - missing result field`);
+            throw new ScriptException(`Invalid ${context} response format - missing "result" field`);
         }
 
         return data;
@@ -148,7 +131,7 @@ function makeApiRequest(url, method = 'GET', headers = API_HEADERS, body = null,
 }
 
 /**
- * Extract video ID from URL using multiple patterns
+ * Extract video ID from SpankBang URL using multiple patterns
  * @param {string} url - Video URL to extract ID from
  * @returns {string} Extracted video ID
  */
@@ -158,8 +141,8 @@ function extractVideoId(url) {
     }
 
     const patterns = [
-        REGEX_PATTERNS.extraction.videoIdStandard,
-        REGEX_PATTERNS.extraction.videoIdAlternative,
+        REGEX_PATTERNS.extraction.videoIdStandard,       // /\/([a-z0-9]+)\/video/
+        REGEX_PATTERNS.extraction.videoIdAlternative,    // /\/video\/([a-z0-9]+)/
         REGEX_PATTERNS.extraction.videoIdNumericWithSuffix,
         REGEX_PATTERNS.extraction.videoIdNumeric
     ];
@@ -175,7 +158,7 @@ function extractVideoId(url) {
 }
 
 /**
- * Extract profile ID from URL using multiple patterns
+ * Extract profile or pornstar ID from SpankBang URL
  * @param {string} url - Profile URL to extract ID from
  * @returns {string} Extracted profile ID
  */
@@ -184,52 +167,45 @@ function extractProfileId(url) {
         throw new ScriptException("Invalid URL provided for profile ID extraction");
     }
 
-    // Check for internal URL scheme first (preferred)
-    const internalMatch = url.match(REGEX_PATTERNS.urls.channelInternal);
-    if (internalMatch && internalMatch[1]) {
-        return internalMatch[1];
+    // Profile URLs (users)
+    const profileMatch = url.match(REGEX_PATTERNS.extraction.profileIdUsername);
+    if (profileMatch && profileMatch[1]) {
+        return profileMatch[1];
     }
 
-    // Check for pornstar URLs - these need special handling
+    // Pornstar URLs (special handling)
     const pornstarMatch = url.match(REGEX_PATTERNS.extraction.pornstarName);
     if (pornstarMatch && pornstarMatch[1]) {
-        // For pornstar URLs, we need to search for the pornstar to get their ID
-        // Return the name for now, and handle the ID lookup in getChannel
+        // Return the name; you can implement lookup later if needed
         return `pornstar:${pornstarMatch[1]}`;
     }
 
-    // Check for channels URLs
-    const channelsMatch = url.match(REGEX_PATTERNS.extraction.channelsUsername);
-    if (channelsMatch && channelsMatch[1]) {
-        return channelsMatch[1];
+    // Playlist URLs
+    const playlistMatch = url.match(REGEX_PATTERNS.extraction.playlistId);
+    if (playlistMatch && playlistMatch[1]) {
+        return playlistMatch[1];
     }
 
-    // Check for models URLs
-    const modelsMatch = url.match(REGEX_PATTERNS.extraction.modelsUsername);
-    if (modelsMatch && modelsMatch[1]) {
-        return modelsMatch[1];
+    throw new ScriptException(`Could not extract profile or pornstar ID from URL: ${url}`);
+}
+   // Try external URL patterns for regular profiles (SpankBang)
+const patterns = [
+    /\/pornstar\/([^\/\?]+)/,   // pornstar profiles
+    /\/([a-zA-Z0-9_\-]+)\/?$/   // regular profiles or channels
+];
+
+for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+        const profileId = match[1];
+        return profileId;
     }
-
-    // Try external URL patterns for regular profiles
-    const patterns = [
-        REGEX_PATTERNS.extraction.profileIdNumeric,
-        REGEX_PATTERNS.extraction.profileIdUsername,
-        REGEX_PATTERNS.extraction.profileIdGeneral
-    ];
-
-    for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match && match[1]) {
-            const profileId = match[1];
-            return profileId;
-        }
-    }
-
-    throw new ScriptException(`Could not extract profile ID from URL: ${url}`);
 }
 
+throw new ScriptException(`Could not extract profile ID from URL: ${url}`);
+
 /**
- * Create video sources from video data
+ * Create video sources from SpankBang video data
  * @param {Object} videoData - Video data from API
  * @returns {Array} Array of video sources
  */
@@ -237,9 +213,9 @@ function createVideoSources(videoData) {
     const videoSources = [];
 
     // Add MP4 sources if available
-    if (videoData.url_mp4_250p) {
+    if (videoData.sources?.mp4_240) {
         videoSources.push(new VideoUrlSource({
-            url: videoData.url_mp4_250p,
+            url: videoData.sources.mp4_240,
             name: CONFIG.VIDEO_QUALITIES.LOW.name,
             container: "mp4",
             width: CONFIG.VIDEO_QUALITIES.LOW.width,
@@ -247,9 +223,9 @@ function createVideoSources(videoData) {
         }));
     }
 
-    if (videoData.url_mp4_360p) {
+    if (videoData.sources?.mp4_360) {
         videoSources.push(new VideoUrlSource({
-            url: videoData.url_mp4_360p,
+            url: videoData.sources.mp4_360,
             name: CONFIG.VIDEO_QUALITIES.MEDIUM.name,
             container: "mp4",
             width: CONFIG.VIDEO_QUALITIES.MEDIUM.width,
@@ -257,10 +233,10 @@ function createVideoSources(videoData) {
         }));
     }
 
-    // Add HLS source if available and allowed
-    if (videoData.url_hls && videoData.allow_hls) {
+    // Add HLS source if available
+    if (videoData.sources?.hls) {
         videoSources.push(new HLSSource({
-            url: videoData.url_hls,
+            url: videoData.sources.hls,
             name: "HLS",
             priority: true
         }));
@@ -295,8 +271,8 @@ function createPlatformAuthor(videoData) {
     // Build external URL based on profile type
     let authorUrl;
     if (videoData.profile_name) {
-        // Use channels format for regular profiles
-        authorUrl = `${CONFIG.EXTERNAL_URL_BASE}/channels/${videoData.profile_name}`;
+        // Use channel format for regular profiles
+        authorUrl = `${CONFIG.EXTERNAL_URL_BASE}/profile/${videoData.profile_name}`;
     } else {
         // Fallback to internal URL if no profile name available
         authorUrl = `${CONFIG.INTERNAL_URL_SCHEME}${videoData.id_user}`;
@@ -311,14 +287,13 @@ function createPlatformAuthor(videoData) {
 }
 
 /**
- * Create video rating from XNXX rating data
+ * Create video rating from SpankBang rating data
  * @param {Object} videoData - Video data from API
  * @returns {RatingLikesDislikes} Rating object with likes and dislikes
  */
 function createVideoRating(videoData) {
-    // Extract like/dislike counts from XNXX API data
-    const likeCount = parseInt(videoData.nb_good);
-    const dislikeCount = parseInt(videoData.nb_bad);
+    const likeCount = parseInt(videoData.likes || 0);
+    const dislikeCount = parseInt(videoData.dislikes || 0);
 
     return new RatingLikesDislikes(
         isNaN(likeCount) ? 0 : likeCount,
@@ -342,18 +317,20 @@ function buildVideoDescription(videoData) {
         description += "\n\nStars: " + videoData.pornstars.join(", ");
     }
 
-    // Add basic stats (rating is now handled separately by Grayjay)
+    // Add basic stats
     description += `\n\nViews: ${videoData.views?.toLocaleString() || 'Unknown'}`;
     description += `\nDuration: ${videoData.duration || 'Unknown'}`;
     description += `\nComments: ${videoData.nb_comments || 0}`;
 
-    // Add rating percentage for reference (actual like/dislike counts are in the rating object)
-    if (videoData.vote) {
-        description += `\nRating: ${videoData.vote}%`;
-    }
-
     return description;
 }
+
+    // Add rating percentage for reference (actual like/dislike counts are in the rating object)
+if (videoData.vote) {
+    description += `\nRating: ${videoData.vote}%`;
+}
+
+return description;
 
 /**
  * Create video details from API data
@@ -362,23 +339,20 @@ function buildVideoDescription(videoData) {
  * @returns {PlatformVideoDetails} Video details object
  */
 function createVideoDetailsFromApiData(data, originalUrl) {
-    // API v6 response structure: { result: true, code: 0, data: { video: {...}, relateds: [...] } } or legacy { video: {...}, relateds: [...] }
-    const videoData = data.data?.video || data.video;
+    // SpankBang API response structure: { video: {...}, relateds: [...] }
+    const videoData = data.video || data.data?.video;
 
-    // Create video sources, thumbnails, and author using utility functions
+    // Create video sources, thumbnails, author, description, and rating
     const videoSources = createVideoSources(videoData);
     const thumbnails = createThumbnails(videoData);
     const author = createPlatformAuthor(videoData);
     const description = buildVideoDescription(videoData);
-
-    // Create rating from like/dislike data
     const rating = createVideoRating(videoData);
 
-    // Subtract 1 year (31536000 seconds) to correct the date
+    // Correct upload time if necessary (optional)
     const ONE_YEAR_SECONDS = 31536000;
     const correctedDateTime = videoData.upload_time ? (videoData.upload_time - ONE_YEAR_SECONDS) : 0;
 
-    // Create detailed video object
     const videoDetails = new PlatformVideoDetails({
         id: new PlatformID(PLATFORM, videoData.id?.toString() || "", plugin.config.id),
         name: videoData.title || "Untitled",
@@ -387,7 +361,7 @@ function createVideoDetailsFromApiData(data, originalUrl) {
         datetime: correctedDateTime,
         duration: parseDuration(videoData.duration),
         viewCount: videoData.views || 0,
-        url: `${CONFIG.EXTERNAL_URL_BASE}/video.${videoData.id}/`,
+        url: `${CONFIG.EXTERNAL_URL_BASE}/video/${videoData.id}/`,
         sharedUrl: videoData.url ? `${CONFIG.EXTERNAL_URL_BASE}${videoData.url}` : originalUrl,
         isLive: false,
         description: description,
@@ -398,8 +372,7 @@ function createVideoDetailsFromApiData(data, originalUrl) {
     });
 
     // Add content recommendations if available
-    // API v6 response structure: { result: true, code: 0, data: { relateds: [...] } } or legacy { relateds: [...] }
-    const relateds = data.data?.relateds || data.relateds;
+    const relateds = data.relateds || data.data?.relateds;
     if (relateds && Array.isArray(relateds) && relateds.length > 0) {
         videoDetails.getContentRecommendations = function () {
             return getContentRecommendations(relateds);
@@ -431,66 +404,54 @@ source.enable = function (config) {
  * Get home page content with pagination support
  * Returns playlists (categories) on first page, then videos on subsequent pages
  * @param {string} continuationToken - Token for pagination
- * @returns {XNXXHomeContentPager} Pager with home content
+ * @returns {SpankBangHomeContentPager} Pager with home content
  */
 source.getHome = function (continuationToken) {
     try {
+        let startIndex = 0;
 
-        let startIndex;
-
-        // First page: return playlists (categories)
-        if (!continuationToken) {
-            startIndex =  0;
-        }
-        else {
+        if (continuationToken) {
             const tokenData = JSON.parse(continuationToken);
             startIndex = tokenData.videoStartIndex || 0;
         }
 
-        // Subsequent pages: return videos
-        const url = `${BASE_URL}/home?country=US&language=en&version=STRAIGHT`;
+        // SpankBang API home endpoint
+        const url = `${BASE_URL}/home?country=US&language=en`;
         const data = makeApiRequest(url, 'GET', API_HEADERS, null, 'home content');
 
-        // API response structure: { result: true, code: 0, data: { ids: [...] } } or legacy { result: true, ids: [...] }
-        const ids = data.data?.ids || data.ids;
+        // SpankBang response: { videos: [id, id, ...] } or legacy { ids: [...] }
+        const ids = data.videos || data.ids;
         if (!ids || !Array.isArray(ids)) {
             throw new ScriptException("Invalid home response format - missing or invalid ids array");
         }
-
-        // Parse continuation token to get page info
 
         const endIndex = Math.min(startIndex + CONFIG.DEFAULT_PAGE_SIZE, ids.length);
         const pageIds = ids.slice(startIndex, endIndex);
 
         if (pageIds.length === 0) {
-            return new XNXXHomeContentPager([], false, { continuationToken: null });
+            return new SpankBangHomeContentPager([], false, { continuationToken: null });
         }
 
-        // Fetch video details in bulk
         const videos = fetchVideoDetailsBulk(pageIds);
 
         const hasMore = endIndex < ids.length;
         const nextToken = hasMore ? JSON.stringify({ videoStartIndex: endIndex }) : null;
 
-        // If this is the last page, try to append category playlists
+        // Append categories on the last page if available
         if (!hasMore) {
             try {
-                // Call the function to get categories - this may return empty results if endpoint doesn't exist
                 const playlistsPager = getHomePlaylists();
                 const categoryPlaylists = playlistsPager.results || [];
-
-                // Only concatenate if we actually got playlists
                 if (categoryPlaylists && categoryPlaylists.length > 0) {
                     const combinedResults = videos.concat(categoryPlaylists);
-                    return new XNXXHomeContentPager(combinedResults, false, { continuationToken: null });
+                    return new SpankBangHomeContentPager(combinedResults, false, { continuationToken: null });
                 }
             } catch (categoryError) {
-                log("Failed to append categories on last page (endpoint may not exist): " + categoryError.message);
-                // Fall through to return videos only
+                log("Failed to append categories on last page: " + categoryError.message);
             }
         }
 
-        return new XNXXHomeContentPager(videos, hasMore, { continuationToken: nextToken });
+        return new SpankBangHomeContentPager(videos, hasMore, { continuationToken: nextToken });
 
     } catch (error) {
         throw new ScriptException("Failed to get home content: " + error.message);
@@ -498,57 +459,41 @@ source.getHome = function (continuationToken) {
 };
 
 /**
- * Get home playlists (categories) from the categories endpoint
- * @returns {XNXXHomeContentPager} Pager with playlist content
+ * Get home playlists (categories) from SpankBang categories endpoint
+ * @returns {SpankBangHomeContentPager} Pager with playlist content
  */
 function getHomePlaylists() {
     try {
         const url = `${BASE_URL}/categories`;
         const data = makeApiRequest(url, 'GET', API_HEADERS, null, 'home categories');
 
-        // API v6 response structure: { result: true, code: 0, data: { categories: [...] } }
-        const categories = data.data?.categories || data.categories;
-
+        const categories = data.categories || data.data?.categories;
         if (!categories || !Array.isArray(categories)) {
             throw new ScriptException("Invalid categories response format - missing or invalid categories array");
         }
 
-        const playlists = [];
-
-        // Convert categories to playlists (XVideos format: id, name, nb_videos, thumb_*)
-        categories.forEach(category => {
-            if (category.name && category.name.trim()) {
-                try {
-                    // Create playlist from XVideos category format
-                    const playlist = new PlatformPlaylist({
-                        id: new PlatformID(PLATFORM, category.id?.toString() || category.name, plugin.config.id),
-                        name: category.name,
-                        thumbnail: category.thumb_medium || category.thumb_small || "",
-                        videoCount: category.nb_videos || 0,
-                        url: `xvideos://category/${category.id || category.name}`,
-                        author: new PlatformAuthorLink(
-                            new PlatformID(PLATFORM, "xvideos", plugin.config.id),
-                            "XVideos",
-                            CONFIG.EXTERNAL_URL_BASE,
-                            ""
-                        )
-                    });
-
-                    if (playlist && playlist.name && playlist.url) {
-                        playlists.push(playlist);
-                    }
-                } catch (playlistError) {
-                    // Skip invalid playlists but continue processing
-                    log(`Error creating playlist from category: ${playlistError.message}`);
-                }
+        const playlists = categories.map(category => {
+            try {
+                return new PlatformPlaylist({
+                    id: new PlatformID(PLATFORM, category.id?.toString() || category.name, plugin.config.id),
+                    name: category.name,
+                    thumbnail: category.thumb_medium || category.thumb_small || "",
+                    videoCount: category.nb_videos || 0,
+                    url: `spankbang://category/${category.id || category.name}`,
+                    author: new PlatformAuthorLink(
+                        new PlatformID(PLATFORM, "spankbang", plugin.config.id),
+                        "SpankBang",
+                        CONFIG.EXTERNAL_URL_BASE,
+                        ""
+                    )
+                });
+            } catch (err) {
+                log(`Error creating playlist from category: ${err.message}`);
+                return null;
             }
-        });
+        }).filter(p => p !== null);
 
-        // Ensure we have a valid array (even if empty)
-        const validPlaylists = Array.isArray(playlists) ? playlists : [];
-
-        // Return playlists without continuation - this is for last page append
-        return new XNXXHomeContentPager(validPlaylists, false, { continuationToken: null });
+        return new SpankBangHomeContentPager(playlists, false, { continuationToken: null });
 
     } catch (error) {
         throw new ScriptException("Failed to get home playlists: " + error.message);
@@ -557,37 +502,37 @@ function getHomePlaylists() {
 
 /**
  * Create a PlatformPlaylist from category data
- * @param {Object} category - Category data from API
+ * @param {Object} category - Category data from SpankBang API
  * @returns {PlatformPlaylist} Playlist object
  */
 function createPlatformPlaylist(category) {
     try {
         // Decode HTML entities in category name
-        const categoryName = category?.t || "Unknown Category";
+        const categoryName = category?.name || "Unknown Category";
         const decoded = categoryName.toLowerCase().replace(/&#(\d+);/g, (_, dec) => {
             return String.fromCharCode(dec);
         });
 
         // Extract search term from category URL or use decoded name
         let searchTerm = decoded;
-        if (category.u) {
+        if (category.url) {
             // Extract search term from URL like "/search/big+dick?top&id=28895395"
-            const urlMatch = category.u.match(/\/search\/([^?]+)/);
+            const urlMatch = category.url.match(/\/search\/([^?]+)/);
             if (urlMatch && urlMatch[1]) {
                 searchTerm = decodeURIComponent(urlMatch[1].replace(/\+/g, ' '));
             }
         }
 
         // Create internal URL for the playlist using the search term
-        const playlistUrl = `xvideos://playlist/${searchTerm}`;
+        const playlistUrl = `spankbang://category/${searchTerm}`;
 
         // Use category thumbnail or a default one
-        const thumbnail = category.i || "";
+        const thumbnail = category.thumbnail || "";
 
         // Parse video count
         let videoCount = -1;
-        if (category.n && typeof category.n === 'string') {
-            const numStr = category.n.replace(/,/g, '');
+        if (category.video_count && typeof category.video_count === 'string') {
+            const numStr = category.video_count.replace(/,/g, '');
             const num = parseInt(numStr);
             if (!isNaN(num)) {
                 videoCount = num;
@@ -601,8 +546,8 @@ function createPlatformPlaylist(category) {
                 new Thumbnail(thumbnail, 0)
             ]),
             author: new PlatformAuthorLink(
-                new PlatformID(PLATFORM, "xvideos", plugin.config.id),
-                "XVideos",
+                new PlatformID(PLATFORM, "spankbang", plugin.config.id),
+                "SpankBang",
                 CONFIG.EXTERNAL_URL_BASE,
                 ""
             ),
@@ -615,6 +560,7 @@ function createPlatformPlaylist(category) {
         return new PlatformPlaylist(playlistObj);
 
     } catch (error) {
+        log("Error creating playlist from category: " + error.message);
         return null;
     }
 }
@@ -634,7 +580,7 @@ function fetchVideoDetailsBulk(videoIds) {
         const url = `${BASE_URL}/videos-info?ids=${idsParam}`;
         const data = makeApiRequest(url, 'GET', API_HEADERS, null, 'bulk video details');
 
-        // API v6 response structure: { result: true, code: 0, data: { videos: {...} } } or legacy { videos: {...} }
+        // SpankBang response: { result: true, code: 0, data: { videos: {...} } }
         const videosData = data.data?.videos || data.videos;
 
         if (!videosData) {
@@ -657,6 +603,11 @@ function fetchVideoDetailsBulk(videoIds) {
     }
 }
 
+/**
+ * Create a PlatformVideo object from video data
+ * @param {Object} videoData - Video data from SpankBang API
+ * @returns {PlatformVideo} Platform video object
+ */
 function createPlatformVideo(videoData) {
     const thumbnails = createThumbnails(videoData);
     const author = createPlatformAuthor(videoData);
@@ -681,6 +632,11 @@ function createPlatformVideo(videoData) {
     });
 }
 
+/**
+ * Parse video duration (e.g., "6min", "27min", "1h 30min")
+ * @param {string} durationStr - Duration string
+ * @returns {number} Total duration in seconds
+ */
 function parseDuration(durationStr) {
     if (!durationStr) return 0;
 
@@ -706,12 +662,46 @@ function parseDuration(durationStr) {
     return totalSeconds;
 }
 
+/**
+ * Create a PlatformComment object from comment data
+ * @param {Object} commentData - Comment data from SpankBang API
+ * @param {string} videoId - Video ID this comment belongs to
+ * @param {number} childrenCounts - Number of replies (children comments)
+ * @returns {PlatformComment} Platform comment object
+ */
 function createPlatformComment(commentData, videoId, childrenCounts) {
     try {
         if (!commentData || !commentData.id) {
             return null;
         }
 
+        const comment = new PlatformComment({
+            id: commentData.id.toString(),
+            author: commentData.author || "Unknown",
+            datetime: commentData.timestamp || 0,
+            text: commentData.text || "No comment text",
+            videoId: videoId,
+            replyCount: childrenCounts || 0,
+            score: commentData.score || 0,
+            replies: [],
+        });
+
+        return comment;
+
+    } catch (error) {
+        log("Error creating comment from comment data: " + error.message);
+        return null;
+    }
+}
+        /**
+ * Create a PlatformComment from comment data
+ * @param {Object} commentData - Comment data from the API
+ * @param {string} videoId - The ID of the video this comment belongs to
+ * @param {Object} childrenCounts - Mapping of comment IDs to reply counts
+ * @returns {PlatformComment} Comment object
+ */
+function createPlatformComment(commentData, videoId, childrenCounts) {
+    try {
         // Default childrenCounts to empty object if not provided
         childrenCounts = childrenCounts || {};
 
@@ -758,12 +748,10 @@ function createPlatformComment(commentData, videoId, childrenCounts) {
             authorUrl = commentData.profile_url;
         }
 
-        // Parse date - handle XNXX specific date formats
-        // Grayjay expects dates in SECONDS since Unix epoch, not milliseconds
+        // Parse date - handle specific date formats
         let date = 0;
         const currentTimeSeconds = Math.round(Date.now() / 1000);
 
-        // Try different date field names and formats
         const dateValue = commentData.date || commentData.timestamp || commentData.created_at || commentData.time;
 
         if (dateValue) {
@@ -771,48 +759,35 @@ function createPlatformComment(commentData, videoId, childrenCounts) {
                 if (typeof dateValue === 'number') {
                     // Check if it's a Unix timestamp in seconds or milliseconds
                     if (dateValue > 1000000000 && dateValue < 10000000000) {
-                        // Unix timestamp in seconds (between 2001 and 2286) - use as is
+                        // Unix timestamp in seconds
                         date = dateValue;
                     } else if (dateValue > 1000000000000) {
                         // Unix timestamp in milliseconds - convert to seconds
                         date = Math.round(dateValue / 1000);
                     } else {
-                        // Might be a relative timestamp or invalid, use current time
+                        // Invalid or relative timestamp, use current time
                         date = currentTimeSeconds;
                     }
                 } else if (typeof dateValue === 'string') {
                     // Try parsing as ISO string first
                     const parsedDate = new Date(dateValue);
-                    if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() > 0) {
+                    if (!isNaN(parsedDate.getTime())) {
                         // Convert milliseconds to seconds
                         date = Math.round(parsedDate.getTime() / 1000);
                     } else {
                         // Try parsing as Unix timestamp string
                         const timestamp = parseInt(dateValue);
-                        if (!isNaN(timestamp) && timestamp > 1000000000 && timestamp < 10000000000) {
-                            // Unix timestamp in seconds - use as is
-                            date = timestamp;
-                        } else if (!isNaN(timestamp) && timestamp > 1000000000000) {
-                            // Unix timestamp in milliseconds - convert to seconds
-                            date = Math.round(timestamp / 1000);
+                        if (!isNaN(timestamp)) {
+                            date = timestamp > 1000000000 ? timestamp : Math.round(timestamp / 1000);
                         } else {
-                            // Invalid or relative timestamp, use current time
                             date = currentTimeSeconds;
                         }
                     }
                 }
-
-                // Validate the final date - ensure it's reasonable (in seconds)
-                if (date <= 0 || date > currentTimeSeconds + 86400) { // Not in future by more than 1 day
-                    date = currentTimeSeconds;
-                }
-
             } catch (e) {
-                // Failed to parse date, use current time
-                date = currentTimeSeconds;
+                date = currentTimeSeconds; // Use current time on error
             }
         } else {
-            // No date field found, use current time
             date = currentTimeSeconds;
         }
 
@@ -826,42 +801,32 @@ function createPlatformComment(commentData, videoId, childrenCounts) {
         }
 
         // Parse reply count from the children mapping
-        // The API provides a separate 'children' object that maps comment IDs to reply counts
         let replyCount = 0;
         if (childrenCounts && commentData.id && childrenCounts[commentData.id]) {
             replyCount = parseInt(childrenCounts[commentData.id]) || 0;
         }
 
-        // Create proper context URL for the video
+        // Create comment context URL
         const contextUrl = `${CONFIG.EXTERNAL_URL_BASE}/video.${videoId}/`;
 
-        // Ensure all string fields have proper non-null values
-        const safeAuthorName = authorName || "Anonymous";
-        const safeAuthorUrl = authorUrl || "";
-        const safeAuthorThumbnail = authorThumbnail || "";
-        const safeMessage = message || "";
-        const safeContextUrl = contextUrl || "";
-        const safeCommentId = commentData.id ? commentData.id.toString() : "";
-        const safeVideoId = videoId ? videoId.toString() : "";
-
-        // Create comment object following standard Grayjay pattern
+        // Create comment object
         const comment = new PlatformComment({
-            contextUrl: safeContextUrl,
+            contextUrl: contextUrl,
             author: new PlatformAuthorLink(
-                new PlatformID(PLATFORM, safeCommentId, plugin.config.id),
-                safeAuthorName,
-                safeAuthorUrl,
-                safeAuthorThumbnail
+                new PlatformID(PLATFORM, commentData.id?.toString() || "", plugin.config.id),
+                authorName,
+                authorUrl,
+                authorThumbnail
             ),
-            message: safeMessage,
+            message: message,
             rating: new RatingLikesDislikes(likeCount, dislikeCount),
             date: date,
             replyCount: replyCount,
             context: {
-                id: safeCommentId,
-                commentId: safeCommentId, // For compatibility with standard patterns
-                videoId: safeVideoId, // Store video ID for getSubComments compatibility
-                claimId: safeVideoId, // Alternative naming for broader compatibility
+                id: commentData.id?.toString() || "",
+                commentId: commentData.id?.toString() || "",
+                videoId: videoId.toString() || "",
+                claimId: videoId.toString() || "",
                 country: commentData.country || "",
                 countryName: commentData.country_name || "",
                 timeDiff: commentData.time_diff || ""
@@ -871,20 +836,25 @@ function createPlatformComment(commentData, videoId, childrenCounts) {
         return comment;
 
     } catch (error) {
-        return null;
+        return null; // Return null if any errors occur while creating the comment
     }
 }
 
+/**
+ * Get recommendations for videos based on related video IDs
+ * @param {string[]} relatedIds - Array of related video IDs
+ * @returns {XNXXRecommendationsPager} Pager with recommended video details
+ */
 function getContentRecommendations(relatedIds) {
     try {
         if (!relatedIds || relatedIds.length === 0) {
             return new XNXXRecommendationsPager([], false, {});
         }
 
-        // Take first 20 related IDs for recommendations
+        // Fetch up to 20 recommended videos based on related IDs
         const recommendationIds = relatedIds.slice(0, 20);
 
-        // Fetch video details in bulk for recommendations
+        // Fetch video details for recommendations
         const recommendedVideos = fetchVideoDetailsBulk(recommendationIds);
 
         return new XNXXRecommendationsPager(recommendedVideos, false, {});
@@ -896,14 +866,14 @@ function getContentRecommendations(relatedIds) {
 
 /**
  * Get comments for a video with pagination support
- * @param {string} videoId - The video ID to get comments for
+ * @param {string} videoId - Video ID
  * @param {string} continuationToken - Token for pagination
- * @returns {XNXXCommentPager} Pager with comments
+ * @returns {XNXXCommentPager} Pager with video comments
  */
 function getVideoComments(videoId, continuationToken) {
     try {
         if (!videoId) {
-            throw new ScriptException("Video ID is required for comments");
+            throw new ScriptException("Video ID is required for fetching comments");
         }
 
         // Parse continuation token for pagination
@@ -916,16 +886,60 @@ function getVideoComments(videoId, continuationToken) {
                 page = tokenData.page || 0;
                 loadedIds = tokenData.loadedIds || "";
             } catch (e) {
+                // If token is invalid, start from the first page
+            }
+        }
+
+        // API request to fetch comments for the video
+        const url = `${BASE_URL}/comments/${videoId}?page=${page}&loadedIds=${loadedIds}`;
+        const data = makeApiRequest(url, 'GET', API_HEADERS, null, 'comments');
+
+        const commentsData = data.data?.comments || data.comments;
+
+        if (!commentsData) {
+            throw new ScriptException("Invalid comments response format - missing comments data");
+        }
+
+        const comments = commentsData.map(commentData => createPlatformComment(commentData, videoId, data.data?.childrenCounts));
+
+        const hasMore = data.data?.has_more || false;
+        const nextToken = hasMore ? JSON.stringify({ page: page + 1, loadedIds: data.data?.loadedIds }) : null;
+
+        return new XNXXCommentPager(comments, hasMore, { continuationToken: nextToken });
+
+    } catch (error) {
+        throw new ScriptException("Failed to get video comments: " + error.message);
+    }
+}
+        /**
+ * Fetch comments for a video with pagination support
+ * @param {string} videoId - Video ID to get comments for
+ * @param {string} continuationToken - Continuation token for pagination
+ * @returns {XNXXCommentPager} Pager with comments data
+ */
+function getVideoComments(videoId, continuationToken) {
+    try {
+        if (!videoId) {
+            throw new ScriptException("Video ID is required for fetching comments");
+        }
+
+        // Parse continuation token if available
+        let page = 0;
+        let loadedIds = "";
+        if (continuationToken) {
+            try {
+                const tokenData = JSON.parse(continuationToken);
+                page = tokenData.page || 0;
+                loadedIds = tokenData.loadedIds || "";
+            } catch (e) {
                 // Invalid token, start from page 0
             }
         }
 
-        // Fetch comments using threads API - based on memory: XNXX comments API uses POST request to /threads/video-comments/get-posts/top/{VIDEO_ID}/{PAGE}/0
+        // Fetch comments using threads API - POST request to fetch comments
         const commentsUrl = `${BASE_URL}/threads/video-comments/get-posts/top/${videoId}/${page}/0?country=US&language=en&version=STRAIGHT`;
-        // Prepare POST data exactly as in the working curl request
         const postData = `load_all=0&loaded_ids=${loadedIds}`;
 
-        // Use exact headers from the working curl request
         const commentsHeaders = {
             ...API_HEADERS,
             'content-type': 'application/x-www-form-urlencoded'
@@ -943,7 +957,6 @@ function getVideoComments(videoId, continuationToken) {
             });
         }
 
-        // API v6 response structure: { result: true, code: 0, data: { posts: {...} } } or legacy { posts: {...} }
         const postsData = data.data?.posts || data.posts;
 
         if (!postsData) {
@@ -956,7 +969,6 @@ function getVideoComments(videoId, continuationToken) {
 
         // Parse comments
         const comments = [];
-        // Extract the children mapping which contains actual reply counts per comment
         const childrenCounts = postsData.children || {};
 
         if (postsData.posts && typeof postsData.posts === 'object') {
@@ -973,7 +985,7 @@ function getVideoComments(videoId, continuationToken) {
         const currentCount = comments.length + (page * CONFIG.COMMENTS_PAGE_SIZE);
         const hasMore = currentCount < totalComments;
 
-        // Create next continuation token
+        // Create continuation token if there are more comments
         let nextToken = null;
         if (hasMore) {
             const newLoadedIds = postsData.ids ? postsData.ids.join(',') : loadedIds;
@@ -1011,10 +1023,9 @@ function getCommentReplies(commentId, videoId, continuationToken) {
             throw new ScriptException("Video ID is required for replies");
         }
 
-        // Parse continuation token for pagination
+        // Parse continuation token if available
         let page = 0;
         let loadedIds = "";
-
         if (continuationToken) {
             try {
                 const tokenData = JSON.parse(continuationToken);
@@ -1022,19 +1033,13 @@ function getCommentReplies(commentId, videoId, continuationToken) {
                 loadedIds = tokenData.loadedIds || "";
             } catch (e) {
                 // Invalid token, start from page 0
-                page = 0;
-                loadedIds = "";
             }
         }
 
-        // Use the exact URL pattern from working curl request for replies
-        // This endpoint gets replies for a specific comment
+        // Fetch replies for a specific comment
         const repliesUrl = `${BASE_URL}/threads/video-comments/get-posts/top/${videoId}/${commentId}/0?country=US&language=en&version=STRAIGHT`;
-
-        // Prepare POST data exactly as in the working curl request
         const postData = `load_all=0&loaded_ids=${loadedIds}`;
 
-        // Use exact headers from the working curl request (excluding accept-encoding)
         const repliesHeaders = {
             ...API_HEADERS,
             'content-type': 'application/x-www-form-urlencoded'
@@ -1044,7 +1049,7 @@ function getCommentReplies(commentId, videoId, continuationToken) {
         try {
             data = makeApiRequest(repliesUrl, 'POST', repliesHeaders, postData, 'comment replies');
         } catch (apiError) {
-            // If we get a 404 or other error, return empty replies instead of throwing
+            // Return empty replies if error occurs
             if (apiError.message.includes('404') || apiError.message.includes('failed with status')) {
                 return new XNXXCommentPager([], false, {
                     commentId: commentId ? commentId.toString() : "",
@@ -1056,10 +1061,8 @@ function getCommentReplies(commentId, videoId, continuationToken) {
             throw apiError;
         }
 
-        // API v6 response structure: { result: true, code: 0, data: { posts: {...} } } or legacy { posts: {...} }
         const postsData = data.data?.posts || data.posts;
 
-        // Check if we have a valid response structure
         if (!postsData) {
             return new XNXXCommentPager([], false, {
                 commentId: commentId ? commentId.toString() : "",
@@ -1069,9 +1072,8 @@ function getCommentReplies(commentId, videoId, continuationToken) {
             });
         }
 
-        // Parse replies (same format as comments)
+        // Parse replies
         const replies = [];
-        // Extract the children mapping which contains actual reply counts per comment
         const childrenCounts = postsData.children || {};
 
         if (postsData.posts && typeof postsData.posts === 'object') {
@@ -1323,12 +1325,12 @@ function resolveUsernameToId(username) {
  * @param {string} originalUrl - Original URL for reference
  * @returns {PlatformChannel} Channel object for the pornstar
  */
-function getPornstarChannel(pornstarName, originalUrl) {
+async function getPornstarChannel(pornstarName, originalUrl) {
     try {
         // Use search-suggest API to find the pornstar's ID
         const cleanQuery = encodeURIComponent(pornstarName.replace(/-/g, ' '));
         const suggestUrl = `${BASE_URL}/search-suggest/${cleanQuery}?country=US&language=en&version=STRAIGHT`;
-        const response = http.GET(suggestUrl, API_HEADERS, false);
+        const response = await http.GET(suggestUrl, API_HEADERS, false);
 
         if (!response.isOk) {
             throw new ScriptException("Failed to search for pornstar information");
@@ -1368,7 +1370,7 @@ function getPornstarChannel(pornstarName, originalUrl) {
         // Now try to get detailed profile information using the ID
         try {
             const profileUrl = `${BASE_URL}/profile-page/${matchedStar.id}?country=US&language=en&version=STRAIGHT`;
-            const profileDataResponse = makeApiRequest(profileUrl, 'GET', API_HEADERS, null, 'pornstar profile');
+            const profileDataResponse = await makeApiRequest(profileUrl, 'GET', API_HEADERS, null, 'pornstar profile');
 
             // API v6 response structure: { result: true, code: 0, data: { ...profile fields... }, metadata: {...} }
             // Legacy: { result: true, profile: {...} }
@@ -1524,102 +1526,32 @@ function createChannelFromProfile(profile, originalUrl, isPornstar = false) {
         id: new PlatformID(PLATFORM, profile.id_user?.toString() || "", plugin.config.id),
         name: profile.disp_name || profile.name || "Unknown Channel",
         thumbnail: profile.pictureUrl || "",
-        banner: profile.pictureUrl || "", // Use same image for banner if no separate banner
-        subscribers: profile.nbSubscribers || 0,
-        description: description,
-        url: externalUrl, // Use external URL as primary for sharing
-        urlAlternatives: [internalUrl], // Internal URL as alternative for Grayjay navigation
-        links: {
-            "XVideos Profile": externalUrl
-        }
-    });
-}
-
-source.search = function (query, type, order, filters, continuationToken) {
-    try {
-        if (!query || query.trim().length === 0) {
-            throw new ScriptException("Search query cannot be empty");
-        }
-
-        // Clean and encode the search query
-        const cleanQuery = encodeURIComponent(query.trim());
-
-        // Determine page number from continuation token (server-side pagination)
-        const page = continuationToken ? (parseInt(continuationToken) || 0) : 0;
-
-        // Fetch search results using search API with page parameter
-        // Try page-based URL first, fallback to query parameter if needed
-        let searchUrl = `${BASE_URL}/search/${cleanQuery}/${page}?country=US&language=en&version=STRAIGHT`;
-        let data;
-
-        try {
-            data = makeApiRequest(searchUrl, 'GET', API_HEADERS, null, 'search results');
-        } catch (pageError) {
-            // Fallback to query parameter approach if page-based URL fails
-            searchUrl = `${BASE_URL}/search/${cleanQuery}?page=${page}&country=US&language=en&version=STRAIGHT`;
-            try {
-                data = makeApiRequest(searchUrl, 'GET', API_HEADERS, null, 'search results with page param');
-            } catch (paramError) {
-                // Final fallback to original URL for page 0 only
-                if (page === 0) {
-                    searchUrl = `${BASE_URL}/search/${cleanQuery}?country=US&language=en&version=STRAIGHT`;
-                    data = makeApiRequest(searchUrl, 'GET', API_HEADERS, null, 'search results fallback');
-                } else {
-                    throw paramError;
-                }
-            }
-        }
-
-        // API v6 response structure: { result: true, code: 0, data: { ids: [...] } } or legacy { ids: [...] }
-        const ids = data.data?.ids || data.ids;
-
-        if (!ids || !Array.isArray(ids)) {
-            throw new ScriptException("Invalid search response format - missing or invalid ids array");
-        }
-
-        // For server-side pagination, use all results from the current page
-        const pageIds = ids;
-
-        // API v6 response structure for metadata
-        const totalResults = data.data?.nb_results_total || data.nb_results_total || 0;
-        const metadata = data.data?.metadata || data.metadata;
-
-        if (pageIds.length === 0) {
-            return new XNXXSearchContentPager([], false, {
-                query: query,
-                type: type,
-                order: order,
-                filters: filters,
-                continuationToken: null,
-                totalResults: totalResults,
-                currentPage: page + 1
-            });
-        }
+        banner: profile.picture
 
         // Fetch video details in bulk
-        const videos = fetchVideoDetailsBulk(pageIds);
+const videos = fetchVideoDetailsBulk(pageIds);
 
-        // Check if there are more pages based on API response or result count
-        // If we got fewer results than expected, assume this is the last page
-        const hasMore = metadata?.hasMorePages !== false &&
-                       pageIds.length >= CONFIG.DEFAULT_PAGE_SIZE &&
-                       (totalResults ? ((page + 1) * CONFIG.DEFAULT_PAGE_SIZE) < totalResults : true);
+// Check if there are more pages based on API response or result count
+// If we got fewer results than expected, assume this is the last page
+const hasMore = metadata?.hasMorePages !== false &&
+               pageIds.length >= CONFIG.DEFAULT_PAGE_SIZE &&
+               (totalResults ? ((page + 1) * CONFIG.DEFAULT_PAGE_SIZE) < totalResults : true);
 
-        const nextToken = hasMore ? (page + 1).toString() : null;
+const nextToken = hasMore ? (page + 1).toString() : null;
 
-        return new XNXXSearchContentPager(videos, hasMore, {
-            query: query,
-            type: type,
-            order: order,
-            filters: filters,
-            continuationToken: nextToken,
-            totalResults: totalResults,
-            currentPage: page + 1
-        });
+return new XNXXSearchContentPager(videos, hasMore, {
+    query: query,
+    type: type,
+    order: order,
+    filters: filters,
+    continuationToken: nextToken,
+    totalResults: totalResults,
+    currentPage: page + 1
+});
 
-    } catch (error) {
-        throw new ScriptException("Failed to search: " + error.message);
-    }
+} catch (error) {
+    throw new ScriptException("Failed to search: " + error.message);
+}
 };
 
 class XNXXSearchContentPager extends ContentPager {
@@ -1874,194 +1806,72 @@ function createSearchQueryPlaylist(searchTerm, isRelated = false) {
         const playlistUrl = `xvideos://playlist/${searchTerm}`;
 
         // For search-based playlists, we don't fetch thumbnails immediately for performance
-        // The thumbnail will be loaded when the playlist is actually opened
-        const thumbnail = "";
-        const thumbnails = new Thumbnails([
-            new Thumbnail(thumbnail, 0)
-        ]);
-
-        // Estimate video count - we don't know the exact count without making an API call
-        // Set to -1 to indicate unknown count
-        const videoCount = -1;
-
-        const playlistName = isRelated ?
-            `${searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)}` :
-            searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1);
-
-        const playlistObj = {
-            id: new PlatformID(PLATFORM, searchTerm, plugin.config.id),
-            name: playlistName,
-            thumbnails: thumbnails,
-            author: new PlatformAuthorLink(
-                new PlatformID(PLATFORM, "xnxx", plugin.config.id),
-                "XNXX",
-                CONFIG.EXTERNAL_URL_BASE,
-                ""
-            ),
-            datetime: 0,
-            url: playlistUrl,
-            videoCount: videoCount,
-            thumbnail: thumbnail
-        };
-
-        return new PlatformPlaylist(playlistObj);
-
-    } catch (error) {
-        log(`Error creating search query playlist for term "${searchTerm}": ${error.message}`);
-        return null;
-    }
-}
-
-/**
- * Generate related search terms based on the original query
- * @param {string} originalQuery - The original search query
- * @returns {Array} Array of related search terms
- */
-function generateRelatedSearchTerms(originalQuery) {
-    const relatedTerms = [];
-    const cleanQuery = originalQuery.toLowerCase().trim();
-
-    try {
-        // Add some common variations and related terms
-        const variations = [
-            `${cleanQuery} compilation`,
-            `best ${cleanQuery}`,
-            `hot ${cleanQuery}`
-        ];
-
-        // Add variations that make sense
-        variations.forEach(variation => {
-            if (variation !== cleanQuery && variation.length > 2) {
-                relatedTerms.push(variation);
-            }
-        });
-
-        // If the query has multiple words, try individual words
-        const words = cleanQuery.split(/\s+/);
-        if (words.length > 1) {
-            words.forEach(word => {
-                if (word.length > 2 && !relatedTerms.includes(word)) {
-                    relatedTerms.push(word);
-                }
-            });
-        }
-
-    } catch (error) {
-        // Ignore errors in related term generation
-    }
-
-    return relatedTerms;
-}
-
-source.isChannelUrl = function (url) {
-    if (!url || typeof url !== 'string') {
-        return false;
-    }
-
-    // Check for internal URL scheme first (preferred)
-    if (REGEX_PATTERNS.urls.channelInternal.test(url)) {
-        return true;
-    }
-
-    // Check for various XVideos profile, channel, model, and pornstar URL patterns
-    const patterns = [
-        REGEX_PATTERNS.urls.channelStandard,
-        REGEX_PATTERNS.urls.channelMobile,
-        REGEX_PATTERNS.urls.channelsStandard,
-        REGEX_PATTERNS.urls.modelsStandard,
-        REGEX_PATTERNS.urls.pornstarStandard,
-        REGEX_PATTERNS.urls.pornstarMobile
-    ];
-
-    return patterns.some(pattern => pattern.test(url));
-};
-
-source.getChannel = function (url) {
-    try {
-        const profileId = extractProfileId(url);
-
-        // Handle pornstar URLs differently
-        if (profileId.startsWith('pornstar:')) {
-            const pornstarName = profileId.replace('pornstar:', '');
-            return getPornstarChannel(pornstarName, url);
-        }
+        // The thumbnail will be loaded when the
 
         // Determine if we need to resolve username to numeric ID
-        let actualProfileId = profileId;
+let actualProfileId = profileId;
 
-        // If profileId is not purely numeric, try to resolve it as a username
-        const resolvedId = resolveUsernameToId(profileId);
+// If profileId is not purely numeric, try to resolve it as a username
+const resolvedId = resolveUsernameToId(profileId);
+if (resolvedId) {
+    actualProfileId = resolvedId;
+}
 
-        if (resolvedId) {
-            actualProfileId = resolvedId;
-        }
+// Fetch profile information using profile-page API
+const profileUrl = `${BASE_URL}/profile-page/${actualProfileId}?country=US&language=en&version=STRAIGHT`;
 
-        // Fetch profile information using profile-page API
-        const profileUrl = `${BASE_URL}/profile-page/${actualProfileId}?country=US&language=en&version=STRAIGHT`;
+try {
+    const data = makeApiRequest(profileUrl, 'GET', API_HEADERS, null, 'channel info');
+    const profileData = data.data || data.profile;
 
-        try {
-            const data = makeApiRequest(profileUrl, 'GET', API_HEADERS, null, 'channel info');
-
-            // API v6 response structure: { result: true, code: 0, data: { ...profile fields... }, metadata: {...} }
-            // Legacy: { result: true, profile: {...} }
-            const profileData = data.data || data.profile;
-
-            if (!profileData) {
-                throw new ScriptException("Invalid channel response format - missing profile object");
-            }
-
-            // Normalize the profile data to handle both API v6 (camelCase) and legacy (snake_case) field names
-            const normalizedProfile = {
-                id_user: profileData.idUser || profileData.id_user,
-                name: profileData.name,
-                disp_name: profileData.displayName || profileData.disp_name,
-                isModel: profileData.isModel,
-                isChannel: profileData.isChannel,
-                aboutMe: profileData.aboutMe,
-                pictureUrl: profileData.pictureUrl,
-                nb_views: profileData.nbViews || profileData.nb_views || 0,
-                nbSubscribers: profileData.nbSubscribers || 0,
-                nb_videos: data.metadata?.nbVideos || profileData.nb_videos
-            };
-
-            return createChannelFromProfile(normalizedProfile, url, false);
-        } catch (apiError) {
-            // If the API call failed and we used a resolved ID, try with the original username
-            if (actualProfileId !== profileId) {
-                const fallbackUrl = `${BASE_URL}/profile-page/${profileId}?country=US&language=en&version=STRAIGHT`;
-
-                try {
-                    const fallbackData = makeApiRequest(fallbackUrl, 'GET', API_HEADERS, null, 'channel info fallback');
-                    const fallbackProfileData = fallbackData.data || fallbackData.profile;
-                    if (fallbackProfileData) {
-                        // Normalize the fallback profile data
-                        const normalizedFallbackProfile = {
-                            id_user: fallbackProfileData.idUser || fallbackProfileData.id_user,
-                            name: fallbackProfileData.name,
-                            disp_name: fallbackProfileData.displayName || fallbackProfileData.disp_name,
-                            isModel: fallbackProfileData.isModel,
-                            isChannel: fallbackProfileData.isChannel,
-                            aboutMe: fallbackProfileData.aboutMe,
-                            pictureUrl: fallbackProfileData.pictureUrl,
-                            nb_views: fallbackProfileData.nbViews || fallbackProfileData.nb_views || 0,
-                            nbSubscribers: fallbackProfileData.nbSubscribers || 0,
-                            nb_videos: fallbackData.metadata?.nbVideos || fallbackProfileData.nb_videos
-                        };
-                        return createChannelFromProfile(normalizedFallbackProfile, url, false);
-                    }
-                } catch (fallbackError) {
-                    // Ignore fallback error, throw original
-                }
-            }
-
-            // Re-throw the original error
-            throw apiError;
-        }
-
-    } catch (error) {
-        throw new ScriptException("Failed to get channel info: " + error.message);
+    if (!profileData) {
+        throw new ScriptException("Invalid channel response format - missing profile object");
     }
-};
+
+    // Normalize the profile data to handle both API v6 (camelCase) and legacy (snake_case) field names
+    const normalizedProfile = {
+        id_user: profileData.idUser || profileData.id_user,
+        name: profileData.name,
+        disp_name: profileData.displayName || profileData.disp_name,
+        isModel: profileData.isModel,
+        isChannel: profileData.isChannel,
+        aboutMe: profileData.aboutMe,
+        pictureUrl: profileData.pictureUrl,
+        nb_views: profileData.nbViews || profileData.nb_views || 0,
+        nbSubscribers: profileData.nbSubscribers || 0,
+        nb_videos: data.metadata?.nbVideos || profileData.nb_videos
+    };
+
+    return createChannelFromProfile(normalizedProfile, url, false);
+
+} catch (apiError) {
+    if (actualProfileId !== profileId) {
+        const fallbackUrl = `${BASE_URL}/profile-page/${profileId}?country=US&language=en&version=STRAIGHT`;
+        try {
+            const fallbackData = makeApiRequest(fallbackUrl, 'GET', API_HEADERS, null, 'channel info fallback');
+            const fallbackProfileData = fallbackData.data || fallbackData.profile;
+            if (fallbackProfileData) {
+                const normalizedFallbackProfile = {
+                    id_user: fallbackProfileData.idUser || fallbackProfileData.id_user,
+                    name: fallbackProfileData.name,
+                    disp_name: fallbackProfileData.displayName || fallbackProfileData.disp_name,
+                    isModel: fallbackProfileData.isModel,
+                    isChannel: fallbackProfileData.isChannel,
+                    aboutMe: fallbackProfileData.aboutMe,
+                    pictureUrl: fallbackProfileData.pictureUrl,
+                    nb_views: fallbackProfileData.nbViews || fallbackProfileData.nb_views || 0,
+                    nbSubscribers: fallbackProfileData.nbSubscribers || 0,
+                    nb_videos: fallbackData.metadata?.nbVideos || fallbackProfileData.nb_videos
+                };
+                return createChannelFromProfile(normalizedFallbackProfile, url, false);
+            }
+        } catch (fallbackError) {
+            // Ignore fallback error, throw original
+        }
+    }
+    // Re-throw the original error
+    throw apiError;
+}
 
 source.getChannelCapabilities = function () {
     return new ResultCapabilities(
@@ -2074,17 +1884,14 @@ source.getChannelCapabilities = function () {
 source.getChannelContents = function (url, type, order, filters, continuationToken) {
     try {
         const profileId = extractProfileId(url);
-
-        // If profileId is not numeric (e.g., from /porn-maker/ URLs), look up the numeric ID
         let actualProfileId = profileId;
+
         if (!/^\d+$/.test(profileId) && !profileId.startsWith('pornstar:')) {
-            // Try to look up the profile using search
             try {
                 const searchUrl = `${BASE_URL}/search/${encodeURIComponent(profileId)}/0?country=US&language=en&version=STRAIGHT`;
                 const searchData = makeApiRequest(searchUrl, 'GET', API_HEADERS, null, 'profile search');
-
-                // Get first video and extract uploader ID
                 const videoIds = searchData.data?.ids || searchData.ids;
+
                 if (videoIds && videoIds.length > 0) {
                     const videoInfoUrl = `${BASE_URL}/videos-info?ids=${videoIds[0]}`;
                     const videoInfo = makeApiRequest(videoInfoUrl, 'GET', API_HEADERS, null, 'video info for profile');
@@ -2098,27 +1905,18 @@ source.getChannelContents = function (url, type, order, filters, continuationTok
             }
         }
 
-        // Determine sort order - default to 'new'
         let sortOrder = 'new';
-        // Note: For now we only support 'new' order
-        // Future: Add support for other orders like 'popular', 'views', etc.
-
-        // Determine page number from continuation token
         const page = continuationToken ? (parseInt(continuationToken) || 0) : 0;
 
-        // Fetch channel videos using profile-page API
         const channelUrl = `${BASE_URL}/profile-page/${actualProfileId}/videos/${sortOrder}/${page}?country=US&language=en&version=STRAIGHT`;
         const data = makeApiRequest(channelUrl, 'GET', API_HEADERS, null, 'channel contents');
-
-        // API response structure: { result: true, code: 0, data: { ids: [...] } } or legacy { result: true, videos: [...] }
         const videoIds = data.data?.ids || data.ids || data.videos;
+
         if (!videoIds || !Array.isArray(videoIds)) {
             throw new ScriptException("Invalid channel contents response format - missing or invalid ids/videos array");
         }
 
         const videoResults = fetchVideoDetailsBulk(videoIds);
-
-        // Check if there are more pages
         const hasMore = !data.metadata?.isLastPage && videoIds.length > 0;
         const nextToken = hasMore ? (page + 1).toString() : null;
 
@@ -2136,29 +1934,16 @@ source.getChannelContents = function (url, type, order, filters, continuationTok
     }
 };
 
-/**
- * Check if URL is a playlist URL
- * @param {string} url - URL to check
- * @returns {boolean} True if URL is a playlist URL
- */
 source.isPlaylistUrl = function (url) {
     if (!url || typeof url !== 'string') {
         return false;
     }
 
-    // Check for internal playlist and category URL schemes
-    return REGEX_PATTERNS.urls.playlistInternal.test(url) ||
-           REGEX_PATTERNS.urls.categoryInternal.test(url);
+    return REGEX_PATTERNS.urls.playlistInternal.test(url) || REGEX_PATTERNS.urls.categoryInternal.test(url);
 };
 
-/**
- * Get playlist details and contents
- * @param {string} url - Playlist URL
- * @returns {PlatformPlaylistDetails} Playlist details with contents
- */
 source.getPlaylist = function (url) {
     try {
-        // Check if it's a category URL or playlist URL
         let searchTerm;
         const categoryMatch = url.match(REGEX_PATTERNS.urls.categoryInternal);
         const playlistMatch = url.match(REGEX_PATTERNS.urls.playlistInternal);
@@ -2171,28 +1956,21 @@ source.getPlaylist = function (url) {
             throw new ScriptException("Invalid playlist URL format");
         }
 
-        // Use search API to get playlist contents
-        // Format search term with + instead of %20 for spaces
         const formattedSearchTerm = searchTerm.replace(/\s+/g, '+');
         const searchUrl = `${BASE_URL}/search/${formattedSearchTerm}?country=US&language=en&version=STRAIGHT`;
         const data = makeApiRequest(searchUrl, 'GET', API_HEADERS, null, 'playlist search');
-
-        // API response structure: { result: true, code: 0, data: { ids: [...] } } or legacy { ids: [...] }
         const ids = data.data?.ids || data.ids;
 
         if (!ids || !Array.isArray(ids)) {
             throw new ScriptException("Invalid playlist search response format - missing or invalid ids array");
         }
 
-        // Fetch video details in bulk for the playlist
         const videos = fetchVideoDetailsBulk(ids);
-        // API v6 response structure for total results
         const totalCount = data.data?.nb_results_total || data.nb_results_total || videos.length;
 
-        // Create playlist details object
         const playlistDetailsObj = {
             id: new PlatformID(PLATFORM, searchTerm, plugin.config.id),
-            name: searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1), // Capitalize first letter
+            name: searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1),
             thumbnails: videos.length > 0 ? videos[0].thumbnails : new Thumbnails([]),
             author: new PlatformAuthorLink(
                 new PlatformID(PLATFORM, "xvideos", localConfig.id),
@@ -2208,7 +1986,6 @@ source.getPlaylist = function (url) {
         };
 
         const playlistDetails = new PlatformPlaylistDetails(playlistDetailsObj);
-
         return playlistDetails;
 
     } catch (error) {
@@ -2233,32 +2010,24 @@ source.isContentDetailsUrl = function (url) {
 };
 
 source.getContentDetails = function (url) {
-
     try {
         const videoId = extractVideoId(url);
-
-        // Try mobile API first
         const detailsUrl = `${BASE_URL}/video-page/${videoId}?country=US&language=en&version=STRAIGHT`;
 
         try {
             const data = makeApiRequest(detailsUrl, 'GET', API_HEADERS, null, 'video details');
-
-            // API response structure: { result: true, code: 0, data: { video: {...} } } or legacy { video: {...} }
             const videoData = data.data?.video || data.video;
 
             if (videoData) {
-                // Check for live streams (not currently supported)
                 if (videoData.is_live) {
                     throw new ScriptException("Live streams are not currently supported");
                 }
-
-                // API success - create video details normally
                 return createVideoDetailsFromApiData(data, url);
             } else {
                 throw new ScriptException("Video not found in API response");
             }
+
         } catch (apiError) {
-            // Try website fallback to extract actual video ID
             return tryWebsiteFallback(url);
         }
 
@@ -2266,157 +2035,11 @@ source.getContentDetails = function (url) {
         throw new ScriptException("Failed to get video details: " + error.message);
     }
 };
-/**
- * Try website fallback to extract actual video ID when API fails
- * @param {string} url - Original video URL
- * @returns {PlatformVideoDetails} Video details object
- */
+
 function tryWebsiteFallback(url) {
     try {
-        // Fetch the website page to extract the actual video ID
         const websiteHeaders = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        };
-
-        const websiteResponse = http.GET(url, websiteHeaders, true);
-
-        if (!websiteResponse.isOk) {
-            throw new ScriptException(`Website returned ${websiteResponse.code}. Video may not exist or be accessible.`);
-        }
-
-        // Extract the actual video ID from HTML
-
-        // Look for id_video in various formats
-        const idVideoPatterns = [
-            /"id_video"\s*:\s*(\d+)/i,
-            /'id_video'\s*:\s*(\d+)/i,
-            /id_video['":\s]*[=:]\s*['"]*(\d+)['"]*[,;\s]/i,
-            /id_video[^0-9]*(\d+)/i
-        ];
-
-        let actualVideoId = null;
-        for (const pattern of idVideoPatterns) {
-            const match = websiteResponse.body.match(pattern);
-            if (match && match[1]) {
-                actualVideoId = match[1];
-                break;
-            }
-        }
-
-        if (!actualVideoId) {
-            throw new ScriptException("Could not extract video ID from website. Video may not exist or be accessible.");
-        }
-
-        // Try the API again with the actual video ID
-        const actualApiUrl = `${BASE_URL}/video-page/${actualVideoId}?country=US&language=en&version=STRAIGHT`;
-        const actualData = makeApiRequest(actualApiUrl, 'GET', API_HEADERS, null, 'video details with extracted ID');
-
-        // API response structure: { result: true, code: 0, data: { video: {...} } } or legacy { video: {...} }
-        const videoData = actualData.data?.video || actualData.video;
-
-        if (!videoData) {
-            throw new ScriptException("Video not available through API even with extracted ID");
-        }
-
-        // Create video details using the helper function
-        return createVideoDetailsFromApiData(actualData, url);
-
-    } catch (error) {
-        throw new ScriptException(`Video not available: ${error.message}`);
-    }
-}
-
-source.getComments = function (url, continuationToken) {
-    try {
-        const videoId = extractVideoId(url);
-
-        // Use the shared getVideoComments function
-        return getVideoComments(videoId, continuationToken);
-
-    } catch (error) {
-        throw new ScriptException("Failed to get comments: " + error.message);
-    }
-};
-
-/**
- * Get sub-comments (replies) for a comment following PeerTube/Odysee pattern
- * This is the standard framework method for getting comment replies
- * @param {PlatformComment} comment - The comment to get replies for
- * @returns {XNXXCommentPager} Pager with comment replies
- */
-source.getSubComments = function (comment) {
-    try {
-        // Validate input comment object
-        if (!comment) {
-            return new XNXXCommentPager([], false, {
-                commentId: "",
-                videoId: "",
-                continuationToken: null,
-                totalReplies: 0,
-                error: "No comment provided"
-            });
-        }
-
-        if (!comment.context) {
-            return new XNXXCommentPager([], false, {
-                commentId: "",
-                videoId: "",
-                continuationToken: null,
-                totalReplies: 0,
-                error: "Comment has no context"
-            });
-        }
-
-        // Extract comment ID - try both possible field names for compatibility
-        const commentId = comment.context.id || comment.context.commentId;
-
-        if (!commentId) {
-            return new XNXXCommentPager([], false, {
-                commentId: "",
-                videoId: "",
-                continuationToken: null,
-                totalReplies: 0,
-                error: "No comment ID found"
-            });
-        }
-
-        // Extract video ID from the comment's context
-        // For XNXX, we need both comment ID and video ID for the API call
-        const videoId = comment.context.videoId || comment.context.claimId;
-
-        if (!videoId) {
-            return new XNXXCommentPager([], false, {
-                commentId: commentId.toString(),
-                videoId: "",
-                continuationToken: null,
-                totalReplies: 0,
-                error: "No video ID found in comment context"
-            });
-        }
-
-        // Use the existing getCommentReplies function with no initial continuation token
-        return getCommentReplies(commentId, videoId, null);
-
-    } catch (error) {
-        // Return empty pager instead of throwing to prevent UI crashes
-        // Ensure all string values are safe for serialization
-        const safeCommentId = (comment?.context?.id || comment?.context?.commentId || "").toString();
-        const safeVideoId = (comment?.context?.videoId || comment?.context?.claimId || "").toString();
-        const safeErrorMessage = error?.message ? error.message.toString() : "Unknown error";
-
-        return new XNXXCommentPager([], false, {
-            commentId: safeCommentId,
-            videoId: safeVideoId,
-            continuationToken: null,
-            totalReplies: 0,
-            error: safeErrorMessage
-        });
-    }
-};
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64;
 
 class XNXXChannelContentPager extends ContentPager {
     constructor(results, hasMore, context) {

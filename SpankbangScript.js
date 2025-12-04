@@ -1,6 +1,8 @@
 const BASE_URL = "https://spankbang.com";
 const PLATFORM = "SpankBang";
+const PLATFORM_CLAIMTYPE = 3;
 
+var config = {};
 let localConfig = {};
 
 const CONFIG = {
@@ -62,12 +64,15 @@ const REGEX_PATTERNS = {
         videoAlternative: /^https?:\/\/(?:www\.)?spankbang\.com\/([a-zA-Z0-9]+)\/embed\/.+$/,
         videoShort: /^https?:\/\/(?:www\.)?spankbang\.com\/([a-zA-Z0-9]+)\/.*$/,
         channelProfile: /^https?:\/\/(?:www\.)?spankbang\.com\/profile\/([^\/\?]+)/,
+        channelOfficial: /^https?:\/\/(?:www\.)?spankbang\.com\/([a-z0-9]+)\/channel\/([^\/\?]+)/,
         channelS: /^https?:\/\/(?:www\.)?spankbang\.com\/s\/([^\/\?]+)/,
         pornstar: /^https?:\/\/(?:www\.)?spankbang\.com\/pornstar\/([^\/\?]+)/,
         playlistInternal: /^spankbang:\/\/playlist\/(.+)$/,
         categoryInternal: /^spankbang:\/\/category\/(.+)$/,
-        channelInternal: /^spankbang:\/\/profile\/(.+)$/,
+        channelInternal: /^spankbang:\/\/channel\/(.+)$/,
+        profileInternal: /^spankbang:\/\/profile\/(.+)$/,
         relativeProfile: /^\/profile\/([^\/\?]+)/,
+        relativeChannel: /^\/([a-z0-9]+)\/channel\/([^\/\?]+)/,
         relativeS: /^\/s\/([^\/\?]+)/,
         relativePornstar: /^\/pornstar\/([^\/\?]+)/
     },
@@ -124,42 +129,67 @@ function extractVideoId(url) {
     throw new ScriptException(`Could not extract video ID from URL: ${url}`);
 }
 
-function extractProfileId(url) {
+function extractChannelId(url) {
     if (!url || typeof url !== 'string') {
-        throw new ScriptException("Invalid URL provided for profile ID extraction");
+        throw new ScriptException("Invalid URL provided for channel ID extraction");
     }
 
-    const internalMatch = url.match(REGEX_PATTERNS.urls.channelInternal);
-    if (internalMatch && internalMatch[1]) {
-        return internalMatch[1];
+    const channelInternalMatch = url.match(REGEX_PATTERNS.urls.channelInternal);
+    if (channelInternalMatch && channelInternalMatch[1]) {
+        return { type: 'channel', id: channelInternalMatch[1] };
+    }
+
+    const profileInternalMatch = url.match(REGEX_PATTERNS.urls.profileInternal);
+    if (profileInternalMatch && profileInternalMatch[1]) {
+        return { type: 'profile', id: profileInternalMatch[1] };
+    }
+
+    const channelOfficialMatch = url.match(REGEX_PATTERNS.urls.channelOfficial);
+    if (channelOfficialMatch && channelOfficialMatch[1] && channelOfficialMatch[2]) {
+        return { type: 'channel', id: `${channelOfficialMatch[1]}:${channelOfficialMatch[2]}` };
+    }
+
+    const relativeChannelMatch = url.match(REGEX_PATTERNS.urls.relativeChannel);
+    if (relativeChannelMatch && relativeChannelMatch[1] && relativeChannelMatch[2]) {
+        return { type: 'channel', id: `${relativeChannelMatch[1]}:${relativeChannelMatch[2]}` };
     }
 
     const relativePornstarMatch = url.match(REGEX_PATTERNS.urls.relativePornstar);
     if (relativePornstarMatch && relativePornstarMatch[1]) {
-        return `pornstar:${relativePornstarMatch[1]}`;
+        return { type: 'pornstar', id: relativePornstarMatch[1] };
     }
 
     const pornstarMatch = url.match(REGEX_PATTERNS.extraction.pornstarName);
     if (pornstarMatch && pornstarMatch[1]) {
-        return `pornstar:${pornstarMatch[1]}`;
+        return { type: 'pornstar', id: pornstarMatch[1] };
+    }
+
+    const channelProfileMatch = url.match(REGEX_PATTERNS.urls.channelProfile);
+    if (channelProfileMatch && channelProfileMatch[1]) {
+        return { type: 'profile', id: channelProfileMatch[1] };
     }
 
     const relativeProfileMatch = url.match(REGEX_PATTERNS.urls.relativeProfile);
     if (relativeProfileMatch && relativeProfileMatch[1]) {
-        return relativeProfileMatch[1];
-    }
-
-    const relativeSMatch = url.match(REGEX_PATTERNS.urls.relativeS);
-    if (relativeSMatch && relativeSMatch[1]) {
-        return relativeSMatch[1];
+        return { type: 'profile', id: relativeProfileMatch[1] };
     }
 
     const profileMatch = url.match(REGEX_PATTERNS.extraction.profileName);
     if (profileMatch && profileMatch[1]) {
-        return profileMatch[1];
+        return { type: 'profile', id: profileMatch[1] };
     }
 
-    throw new ScriptException(`Could not extract profile ID from URL: ${url}`);
+    throw new ScriptException(`Could not extract channel ID from URL: ${url}`);
+}
+
+function extractProfileId(url) {
+    const result = extractChannelId(url);
+    if (result.type === 'channel') {
+        return `channel:${result.id}`;
+    } else if (result.type === 'pornstar') {
+        return `pornstar:${result.id}`;
+    }
+    return result.id;
 }
 
 function parseDuration(durationStr) {
@@ -229,30 +259,39 @@ function extractUploaderFromHtml(html) {
     };
 
     const uploaderPatterns = [
-        /<a[^>]*href="(\/profile\/[^"]+)"[^>]*class="[^"]*uploader[^"]*"[^>]*>([^<]+)</i,
-        /<a[^>]*class="[^"]*uploader[^"]*"[^>]*href="(\/profile\/[^"]+)"[^>]*>([^<]+)</i,
-        /class="n"\s*>\s*<a[^>]*href="(\/(?:profile|s|pornstar)\/[^"]+)"[^>]*>([^<]+)</i,
-        /<div[^>]*class="[^"]*info[^"]*"[^>]*>[\s\S]*?<a[^>]*href="(\/(?:profile|s|pornstar)\/[^"]+)"[^>]*>([^<]+)</i,
-        /<a[^>]*href="(\/(?:profile|s|pornstar)\/[^"]+)"[^>]*>[\s\S]*?<span[^>]*class="[^"]*name[^"]*"[^>]*>([^<]+)</i
+        /<a[^>]*href="(\/([a-z0-9]+)\/channel\/([^"]+))"[^>]*>([^<]+)</i,
+        /<a[^>]*href="(\/profile\/([^"]+))"[^>]*class="[^"]*uploader[^"]*"[^>]*>([^<]+)</i,
+        /<a[^>]*class="[^"]*uploader[^"]*"[^>]*href="(\/profile\/([^"]+))"[^>]*>([^<]+)</i,
+        /class="n"\s*>\s*<a[^>]*href="(\/([a-z0-9]+)\/channel\/([^"]+))"[^>]*>([^<]+)</i,
+        /class="n"\s*>\s*<a[^>]*href="(\/profile\/([^"]+))"[^>]*>([^<]+)</i,
+        /class="n"\s*>\s*<a[^>]*href="(\/pornstar\/([^"]+))"[^>]*>([^<]+)</i,
+        /<div[^>]*class="[^"]*info[^"]*"[^>]*>[\s\S]*?<a[^>]*href="(\/([a-z0-9]+)\/channel\/([^"]+))"[^>]*>([^<]+)</i,
+        /<div[^>]*class="[^"]*info[^"]*"[^>]*>[\s\S]*?<a[^>]*href="(\/profile\/([^"]+))"[^>]*>([^<]+)</i,
+        /<div[^>]*class="[^"]*info[^"]*"[^>]*>[\s\S]*?<a[^>]*href="(\/pornstar\/([^"]+))"[^>]*>([^<]+)</i
     ];
 
     for (const pattern of uploaderPatterns) {
         const match = html.match(pattern);
-        if (match && match[1] && match[2]) {
+        if (match && match[1]) {
             const href = match[1];
-            const name = match[2].trim();
             
-            let profileId;
-            if (href.includes('/pornstar/')) {
-                const pornstarMatch = href.match(/\/pornstar\/([^\/\?]+)/);
-                profileId = pornstarMatch ? `pornstar:${pornstarMatch[1]}` : name;
-            } else {
-                const profileMatch = href.match(/\/(?:profile|s)\/([^\/\?]+)/);
-                profileId = profileMatch ? profileMatch[1] : name;
+            if (href.includes('/channel/')) {
+                const shortId = match[2];
+                const channelName = match[3];
+                const displayName = match[4] ? match[4].trim() : channelName;
+                uploader.name = displayName;
+                uploader.url = `spankbang://channel/${shortId}:${channelName}`;
+            } else if (href.includes('/profile/')) {
+                const profileName = match[2];
+                const displayName = match[3] ? match[3].trim() : profileName;
+                uploader.name = displayName;
+                uploader.url = `spankbang://profile/${profileName}`;
+            } else if (href.includes('/pornstar/')) {
+                const pornstarName = match[2];
+                const displayName = match[3] ? match[3].trim() : pornstarName;
+                uploader.name = displayName;
+                uploader.url = `spankbang://profile/pornstar:${pornstarName}`;
             }
-            
-            uploader.name = name;
-            uploader.url = `spankbang://profile/${profileId}`;
             break;
         }
     }
@@ -542,27 +581,47 @@ function parseSearchResults(html) {
             const viewsMatch = block.match(/<span[^>]*class="[^"]*(?:v|views)[^"]*"[^>]*>([^<]+)<\/span>/);
             const viewsStr = viewsMatch ? viewsMatch[1].trim() : "0";
 
-            const uploaderMatch = block.match(/<a[^>]*href="(\/(?:profile|s|pornstar)\/[^"]+)"[^>]*(?:class="[^"]*u[^"]*")?[^>]*>([^<]+)</);
+            const uploaderPatterns = [
+                /<a[^>]*href="(\/([a-z0-9]+)\/channel\/([^"]+))"[^>]*>([^<]+)</i,
+                /<a[^>]*href="(\/profile\/([^"]+))"[^>]*>([^<]+)</i,
+                /<a[^>]*href="(\/pornstar\/([^"]+))"[^>]*>([^<]+)</i
+            ];
+            
             let uploader = { name: "SpankBang", url: "", avatar: "" };
             
-            if (uploaderMatch) {
-                const href = uploaderMatch[1];
-                const name = uploaderMatch[2].trim();
-                
-                let profileId;
-                if (href.includes('/pornstar/')) {
-                    const pornstarMatch = href.match(/\/pornstar\/([^\/\?]+)/);
-                    profileId = pornstarMatch ? `pornstar:${pornstarMatch[1]}` : name;
-                } else {
-                    const profileMatch = href.match(/\/(?:profile|s)\/([^\/\?]+)/);
-                    profileId = profileMatch ? profileMatch[1] : name;
+            for (const pattern of uploaderPatterns) {
+                const uploaderMatch = block.match(pattern);
+                if (uploaderMatch) {
+                    const href = uploaderMatch[1];
+                    
+                    if (href.includes('/channel/')) {
+                        const shortId = uploaderMatch[2];
+                        const channelName = uploaderMatch[3];
+                        const displayName = uploaderMatch[4] ? uploaderMatch[4].trim() : channelName;
+                        uploader = {
+                            name: displayName,
+                            url: `spankbang://channel/${shortId}:${channelName}`,
+                            avatar: ""
+                        };
+                    } else if (href.includes('/profile/')) {
+                        const profileName = uploaderMatch[2];
+                        const displayName = uploaderMatch[3] ? uploaderMatch[3].trim() : profileName;
+                        uploader = {
+                            name: displayName,
+                            url: `spankbang://profile/${profileName}`,
+                            avatar: ""
+                        };
+                    } else if (href.includes('/pornstar/')) {
+                        const pornstarName = uploaderMatch[2];
+                        const displayName = uploaderMatch[3] ? uploaderMatch[3].trim() : pornstarName;
+                        uploader = {
+                            name: displayName,
+                            url: `spankbang://profile/pornstar:${pornstarName}`,
+                            avatar: ""
+                        };
+                    }
+                    break;
                 }
-                
-                uploader = {
-                    name: name,
-                    url: `spankbang://profile/${profileId}`,
-                    avatar: ""
-                };
             }
             
             videos.push({
@@ -731,11 +790,16 @@ function parseComments(html, videoId) {
     return comments;
 }
 
-source.enable = function(config) {
+source.enable = function(conf, settings, savedStateStr) {
+    config = conf ?? {};
     localConfig = config;
 };
 
 source.disable = function() {};
+
+source.saveState = function() {
+    return JSON.stringify({});
+};
 
 source.getHome = function(continuationToken) {
     try {
@@ -779,44 +843,9 @@ source.searchSuggestions = function(query) {
 
 source.getSearchCapabilities = function() {
     return {
-        types: [Type.Feed.Mixed, Type.Feed.Videos],
-        sorts: [Type.Order.Chronological, Type.Order.Views, Type.Order.Rating],
-        filters: [
-            {
-                id: "duration",
-                name: "Duration",
-                isMultiSelect: false,
-                filters: [
-                    { id: "", name: "Any", value: "" },
-                    { id: "1", name: "Short (< 10 min)", value: "1" },
-                    { id: "2", name: "Medium (10-30 min)", value: "2" },
-                    { id: "3", name: "Long (> 30 min)", value: "3" }
-                ]
-            },
-            {
-                id: "quality",
-                name: "Quality",
-                isMultiSelect: false,
-                filters: [
-                    { id: "", name: "Any", value: "" },
-                    { id: "1", name: "HD (720p+)", value: "1" },
-                    { id: "2", name: "Full HD (1080p+)", value: "2" },
-                    { id: "3", name: "4K", value: "3" }
-                ]
-            },
-            {
-                id: "period",
-                name: "Upload Date",
-                isMultiSelect: false,
-                filters: [
-                    { id: "", name: "Any time", value: "" },
-                    { id: "1", name: "Today", value: "1" },
-                    { id: "2", name: "This week", value: "2" },
-                    { id: "3", name: "This month", value: "3" },
-                    { id: "4", name: "This year", value: "4" }
-                ]
-            }
-        ]
+        types: [Type.Feed.Mixed],
+        sorts: [Type.Order.Chronological],
+        filters: []
     };
 };
 
@@ -925,13 +954,14 @@ source.isChannelUrl = function(url) {
     if (!url || typeof url !== 'string') return false;
     
     if (REGEX_PATTERNS.urls.channelInternal.test(url)) return true;
+    if (REGEX_PATTERNS.urls.profileInternal.test(url)) return true;
     
     if (REGEX_PATTERNS.urls.relativeProfile.test(url)) return true;
-    if (REGEX_PATTERNS.urls.relativeS.test(url)) return true;
+    if (REGEX_PATTERNS.urls.relativeChannel.test(url)) return true;
     if (REGEX_PATTERNS.urls.relativePornstar.test(url)) return true;
     
     if (REGEX_PATTERNS.urls.channelProfile.test(url)) return true;
-    if (REGEX_PATTERNS.urls.channelS.test(url)) return true;
+    if (REGEX_PATTERNS.urls.channelOfficial.test(url)) return true;
     if (REGEX_PATTERNS.urls.pornstar.test(url)) return true;
     
     return false;
@@ -941,12 +971,20 @@ source.getChannel = function(url) {
     try {
         const profileId = extractProfileId(url);
         let profileUrl;
+        let internalUrl;
         
         if (profileId.startsWith('pornstar:')) {
             const name = profileId.replace('pornstar:', '');
             profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/pornstar/${name}`;
+            internalUrl = `spankbang://profile/${profileId}`;
+        } else if (profileId.startsWith('channel:')) {
+            const channelInfo = profileId.replace('channel:', '');
+            const [shortId, channelName] = channelInfo.split(':');
+            profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/${shortId}/channel/${channelName}`;
+            internalUrl = `spankbang://channel/${channelInfo}`;
         } else {
             profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/profile/${profileId}`;
+            internalUrl = `spankbang://profile/${profileId}`;
         }
         
         const html = makeRequest(profileUrl, API_HEADERS, 'channel');
@@ -1031,7 +1069,7 @@ source.getChannel = function(url) {
             banner: banner,
             subscribers: subscribers,
             description: description,
-            url: profileUrl,
+            url: internalUrl,
             links: {}
         });
         
@@ -1042,8 +1080,16 @@ source.getChannel = function(url) {
 
 source.getChannelCapabilities = function() {
     return {
-        types: [Type.Feed.Mixed, Type.Feed.Videos],
-        sorts: [Type.Order.Chronological, Type.Order.Views, Type.Order.Rating],
+        types: [Type.Feed.Mixed],
+        sorts: [Type.Order.Chronological],
+        filters: []
+    };
+};
+
+source.getSearchChannelContentsCapabilities = function() {
+    return {
+        types: [Type.Feed.Mixed],
+        sorts: [Type.Order.Chronological],
         filters: []
     };
 };
@@ -1060,6 +1106,14 @@ source.getChannelContents = function(url, type, order, filters, continuationToke
                 profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/pornstar/${name}/${page}`;
             } else {
                 profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/pornstar/${name}`;
+            }
+        } else if (profileId.startsWith('channel:')) {
+            const channelInfo = profileId.replace('channel:', '');
+            const [shortId, channelName] = channelInfo.split(':');
+            if (page > 1) {
+                profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/${shortId}/channel/${channelName}/${page}`;
+            } else {
+                profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/${shortId}/channel/${channelName}`;
             }
         } else {
             if (page > 1) {

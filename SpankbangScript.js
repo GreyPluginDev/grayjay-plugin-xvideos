@@ -596,12 +596,12 @@ source.isChannelUrl = function(url) {
 source.getChannel = function(url) {
     try {
         const profileId = extractProfileId(url);
-        let profileUrl = url;
+        let profileUrl;
         
         if (profileId.startsWith('pornstar:')) {
             const name = profileId.replace('pornstar:', '');
             profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/pornstar/${name}`;
-        } else if (!url.startsWith('http')) {
+        } else {
             profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/profile/${profileId}`;
         }
         
@@ -660,9 +660,17 @@ source.getChannelContents = function(url, type, order, filters, continuationToke
         let profileUrl;
         if (profileId.startsWith('pornstar:')) {
             const name = profileId.replace('pornstar:', '');
-            profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/pornstar/${name}/${page}/`;
+            if (page > 1) {
+                profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/pornstar/${name}/${page}`;
+            } else {
+                profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/pornstar/${name}`;
+            }
         } else {
-            profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/profile/${profileId}/videos/${page}/`;
+            if (page > 1) {
+                profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/profile/${profileId}/videos/${page}`;
+            } else {
+                profileUrl = `${CONFIG.EXTERNAL_URL_BASE}/profile/${profileId}/videos`;
+            }
         }
         
         const html = makeRequest(profileUrl, API_HEADERS, 'channel contents');

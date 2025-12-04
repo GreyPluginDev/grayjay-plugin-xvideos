@@ -19,7 +19,7 @@ What's not working:
 
 
     Channels search
-    Channel subscribe/unsubscribe (partially)
+    Channel subscribe/unsubscribe
     Channel info fetch (description, about, its videos)
     View profiles for models, pornstars, and channels
     Fetching video comments with like/dislike, avatar, etc. (only non-nested ones)

@@ -1,14 +1,14 @@
 {
   "name": "SpankBang",
-  "description": "SpankBang video platform plugin for Grayjay with pornstar search",
+  "description": "SpankBang video platform plugin for Grayjay with pornstar search, recommendations, and improved creator profiles",
   "platformUrl": "https://www.spankbang.com",
   "author": "GreyPluginDev",
   "authorUrl": "https://github.com/GreyPluginDev",
-  "sourceUrl": "https://raw.githubusercontent.com/ruiaso/grayjay-plugin-spankbang/refs/heads/test/SpankbangConfig.json",
-  "repositoryUrl": "https://github.com/ruiaso/grayjay-plugin-spankbang/tree/test",
-  "scriptUrl": "https://raw.githubusercontent.com/ruiaso/grayjay-plugin-spankbang/refs/heads/test/SpankbangScript.js",
-  "version": 6,
-  "iconUrl": "https://raw.githubusercontent.com/ruiaso/grayjay-plugin-spankbang/refs/heads/test/icon.png",
+  "sourceUrl": "https://raw.githubusercontent.com/ruiaso/grayjay-plugin-spankbang/refs/heads/master/SpankbangConfig.json",
+  "repositoryUrl": "https://github.com/ruiaso/grayjay-plugin-spankbang",
+  "scriptUrl": "https://raw.githubusercontent.com/ruiaso/grayjay-plugin-spankbang/refs/heads/master/SpankbangScript.js",
+  "version": 7,
+  "iconUrl": "https://raw.githubusercontent.com/ruiaso/grayjay-plugin-spankbang/refs/heads/master/icon.png",
   "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "scriptSignature": "",
   "scriptPublicKey": "",
@@ -24,7 +24,8 @@
     ".cdn1.spankbang.com",
     ".cdn2.spankbang.com",
     ".cdn3.spankbang.com",
-    ".cdn4.spankbang.com"
+    ".cdn4.spankbang.com",
+    "tbi.sb-cd.com"
   ],
   "supportedClaimTypes": [3],
   "primaryClaimFieldType": 3,
@@ -49,6 +50,17 @@
       "Fixed uploader name extraction from video_toolbar",
       "Improved channel/profile avatar and name detection",
       "Added pagination support for pornstar browsing"
+    ],
+    "7": [
+      "Fixed uploader names showing as Unknown in video thumbnails",
+      "Fixed pornstar avatar extraction - now uses numeric IDs from HTML instead of shortId construction",
+      "Implemented recommended videos feature (getContentRecommendations)",
+      "Improved uploader extraction from search results and video pages",
+      "Added ref.js, types.d.ts, and plugin.d.ts for IDE autocomplete",
+      "Added extractPornstarAvatarFromHtml function for proper avatar URL extraction",
+      "Improved comments parsing with better pattern matching",
+      "Better channel/profile/pornstar avatar detection using DOM patterns",
+      "Added video count display in creator descriptions"
     ]
   }
 }

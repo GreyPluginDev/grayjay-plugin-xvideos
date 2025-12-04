@@ -203,20 +203,66 @@ function parseVideoPage(html, url) {
         };
     }
 
-    const streamRegex = /stream_url_([0-9]+p)\s*=\s*'([^']+)'/g;
+    const streamRegex = /stream_url_([0-9a-z]+p?)\s*=\s*['"](https?:\/\/[^'"]+)['"]/gi;
     let streamMatch;
     while ((streamMatch = streamRegex.exec(html)) !== null) {
-        const quality = streamMatch[1];
+        let quality = streamMatch[1].toLowerCase();
         let streamUrl = streamMatch[2];
         if (streamUrl.includes('\\u002F')) {
             streamUrl = streamUrl.replace(/\\u002F/g, '/');
         }
+        if (!quality.endsWith('p') && /^\d+$/.test(quality)) {
+            quality = quality + 'p';
+        }
         videoData.sources[quality] = streamUrl;
     }
 
-    const m3u8Match = html.match(/source\s*src="([^"]+\.m3u8[^"]*)"/);
+    const m3u8Match = html.match(/['"](https?:\/\/[^'"]+\.m3u8[^'"]*)['"]/);
     if (m3u8Match) {
         videoData.sources['hls'] = m3u8Match[1];
+    }
+
+    if (Object.keys(videoData.sources).length === 0) {
+        const streamKeyMatch = html.match(/data-streamkey\s*=\s*['"]([\w]+)['"]/);
+        if (streamKeyMatch) {
+            const streamKey = streamKeyMatch[1];
+            try {
+                const streamResponse = http.POST(
+                    "https://spankbang.com/api/videos/stream",
+                    "id=" + streamKey + "&data=0",
+                    {
+                        "User-Agent": API_HEADERS["User-Agent"],
+                        "Accept": "application/json, text/plain, */*",
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "Referer": url,
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Origin": "https://spankbang.com"
+                    },
+                    false
+                );
+                
+                if (streamResponse.isOk && streamResponse.body) {
+                    const streamData = JSON.parse(streamResponse.body);
+                    for (const [quality, streamUrl] of Object.entries(streamData)) {
+                        if (streamUrl && typeof streamUrl === 'string' && streamUrl.startsWith('http')) {
+                            let qualityKey = quality.toLowerCase();
+                            if (!qualityKey.endsWith('p') && /^\d+$/.test(qualityKey)) {
+                                qualityKey = qualityKey + 'p';
+                            }
+                            videoData.sources[qualityKey] = streamUrl;
+                        } else if (Array.isArray(streamUrl) && streamUrl.length > 0 && streamUrl[0].startsWith('http')) {
+                            let qualityKey = quality.toLowerCase();
+                            if (!qualityKey.endsWith('p') && /^\d+$/.test(qualityKey)) {
+                                qualityKey = qualityKey + 'p';
+                            }
+                            videoData.sources[qualityKey] = streamUrl[0];
+                        }
+                    }
+                }
+            } catch (e) {
+                log("Stream API request failed: " + e.message);
+            }
+        }
     }
 
     return videoData;
@@ -225,7 +271,7 @@ function parseVideoPage(html, url) {
 function createVideoSources(videoData) {
     const videoSources = [];
 
-    const qualityOrder = ['1080p', '720p', '480p', '360p', '240p'];
+    const qualityOrder = ['4k', '2160p', '1080p', '720p', '480p', '360p', '320p', '240p'];
     
     for (const quality of qualityOrder) {
         if (videoData.sources[quality]) {
@@ -241,9 +287,26 @@ function createVideoSources(videoData) {
         }
     }
 
-    if (videoData.sources.hls) {
+    for (const [quality, url] of Object.entries(videoData.sources)) {
+        if (quality === 'hls' || quality === 'm3u8') continue;
+        const alreadyAdded = qualityOrder.includes(quality);
+        if (!alreadyAdded && url && url.startsWith('http')) {
+            const qualityKey = quality.replace('p', '');
+            const config = CONFIG.VIDEO_QUALITIES[qualityKey] || { width: 854, height: 480 };
+            videoSources.push(new VideoUrlSource({
+                url: url,
+                name: quality,
+                container: "mp4",
+                width: config.width,
+                height: config.height
+            }));
+        }
+    }
+
+    if (videoData.sources.hls || videoData.sources.m3u8) {
+        const hlsUrl = videoData.sources.hls || videoData.sources.m3u8;
         videoSources.push(new HLSSource({
-            url: videoData.sources.hls,
+            url: hlsUrl,
             name: "HLS",
             priority: true
         }));

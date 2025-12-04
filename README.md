@@ -4,8 +4,9 @@ Basic Workflow working fine
 
 Try it
 
-GrayJay -> Sources -> -> Install by URL (For now til QR Code)
-https://raw.githubusercontent.com/ruiaso/grayjay-plugin-spankbang/refs/heads/master/SpankbangConfig.json
+GrayJay -> Sources -> 
+
+![qr-code (1)](https://github.com/ruiaso/grayjay-plugin-spankbang/blob/master/assets/sbqrcode.png)
 
 What's working:
 
@@ -29,3 +30,4 @@ What's not working:
     Search filters
     Premium login
     ...all the rest
+

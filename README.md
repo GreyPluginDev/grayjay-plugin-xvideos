@@ -14,14 +14,13 @@ What's working:
     Video search
     Video playback
     Video info
-
+    Channel info fetch (description, about, its videos)
 
 What's not working:
 
 
     Channels search
     Channel subscribe/unsubscribe (partially)
-    Channel info fetch (description, about, its videos)
     View profiles for models, pornstars, and channels
     Fetching video comments with like/dislike, avatar, etc. (only non-nested ones)
     Subtitles

@@ -4,7 +4,8 @@ Basic Workflow working fine
 
 Try it
 
-GrayJay -> Sources -> 
+GrayJay -> Sources -> +
+And scan this QR code
 
 ![qr-code (1)](https://github.com/ruiaso/grayjay-plugin-spankbang/blob/master/assets/sbqrcode.png)
 

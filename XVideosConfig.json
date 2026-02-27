@@ -4,10 +4,10 @@
     "platformUrl": "https://www.xvideos.com",
     "author": "GreyPluginDev",
     "authorUrl": "https://github.com/GreyPluginDev",
-    "sourceUrl": "https://grayjay-plugin-xvideos.pages.dev/XVideosConfig.json",
+    "sourceUrl": "https://raw.githubusercontent.com/GreyPluginDev/grayjay-plugin-xvideos/refs/heads/master/XVideosConfig.json",
     "repositoryUrl": "https://github.com/GreyPluginDev/grayjay-plugin-xvideos",
     "scriptUrl": "./XVideosScript.js",
-    "version": 3,
+    "version": 4,
     "iconUrl": "./icon.png",
     "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567891",
     "scriptSignature": "",
@@ -18,5 +18,10 @@
         ".xv-app1.com",
         ".cdn77-pic.xvideos-cdn.com",
         ".xvideos.com"
-    ]
+    ],
+    "changelog": {
+        "4": [
+            "Update sourceUrl"
+        ]
+    }
 }
